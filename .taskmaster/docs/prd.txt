@@ -1,0 +1,111 @@
+# Product Requirements Document: Terraform Provider for Kinsta API
+
+## Overview
+This document outlines the requirements for a new provider, `terraform-provider-kinsta`. This provider will enable developers and operations teams to manage their Kinsta hosting resources—including applications, databases, and WordPress sites—using Infrastructure as Code (IaC).
+
+The provider must be compatible with both Terraform (up to v1.5.7) and OpenTofu (all versions). By representing Kinsta resources as code, users can automate provisioning, simplify environment replication, and integrate Kinsta into their existing CI/CD workflows. This provider is for DevOps engineers, platform teams, and developers who want to manage their Kinsta infrastructure programmatically, reliably, and at scale.
+
+## Core Features
+The provider will expose Kinsta API endpoints as Terraform/OpenTofu resources and data sources. All resources should be idempotent and reflect the state of the remote objects.
+
+### Provider Configuration
+- **`kinsta` provider block:**
+  - `api_key` (String, Required): The API key generated from the MyKinsta dashboard. Sourced from an environment variable `KINSTA_API_KEY` by default.
+
+### Application Hosting
+- **Resource: `kinsta_application`**
+  - **Description:** Manages the full lifecycle (create, read, update, delete) of an application on Kinsta.
+  - **Arguments:** `name`, `display_name`, `region`, `github_repository`, `branch`, `dockerfile_path`, `build_pack`.
+  - **Attributes:** `id`, `name`, `status`, `internal_domains`, `external_domains`.
+- **Data Source: `kinsta_application`**
+  - **Description:** Retrieves information about an existing Kinsta application.
+  - **Arguments:** `id` or `name`.
+- **Data Source: `kinsta_applications`**
+  - **Description:** Retrieves a list of all applications.
+
+### Database Hosting
+- **Resource: `kinsta_database`**
+  - **Description:** Manages the lifecycle of a database.
+  - **Arguments:** `name`, `display_name`, `region`, `db_type` (e.g., "postgresql", "mysql"), `version`, `size`.
+  - **Attributes:** `id`, `name`, `host`, `port`, `username`, `password`.
+- **Data Source: `kinsta_database`**
+  - **Description:** Retrieves information about an existing database.
+- **Data Source: `kinsta_databases`**
+  - **Description:** Retrieves a list of all databases.
+
+### WordPress Hosting
+- **Resource: `kinsta_wordpress_site`**
+  - **Description:** Manages the lifecycle of a WordPress site.
+  - **Arguments:** `name`, `display_name`, `region`, `admin_user`, `admin_password`, `admin_email`, `is_multisite`.
+  - **Attributes:** `id`, `name`, `host`, `status`.
+- **Data Source: `kinsta_wordpress_site`**
+  - **Description:** Retrieves information about an existing WordPress site.
+- **Data Source: `kinsta_wordpress_sites`**
+  - **Description:** Retrieves a list of all WordPress sites.
+
+## User Experience
+- **User Personas:**
+  - **DevOps Engineer:** Automates the creation of staging environments for new feature branches using OpenTofu.
+  - **Platform Engineer:** Builds internal tooling that provisions a standard set of Kinsta resources for new projects using Terraform.
+  - **Developer:** Quickly spins up a Kinsta-hosted database for a new application from their local machine.
+- **Key User Flows:**
+  - **Deploying a new App:** A user defines a `kinsta_application` and a `kinsta_database` in a `.tf` file, runs `tofu apply` or `terraform apply`, and gets a fully deployed application connected to its database.
+  - **Reading Infrastructure:** A user defines a `data "kinsta_applications"` block to pull a list of all running applications to use in other parts of their configuration.
+- **HCL (UX) Considerations:**
+  - The provider should follow standard conventions and naming (e.g., `kinsta_resource_name`).
+  - Attribute and argument names should mirror the Kinsta API for consistency, using `snake_case`.
+  - Documentation for each resource and data source must be comprehensive, with clear examples for both Terraform and OpenTofu.
+
+## Technical Architecture
+- **Compatibility:**
+  - **OpenTofu:** The provider must be fully compatible with all stable versions of OpenTofu.
+  - **Terraform:** Compatibility is guaranteed for versions up to `1.5.7`. Features specific to later Terraform versions that are not present in OpenTofu must not be used.
+- **System Components:**
+  - **Go Application:** The provider will be written in Go, using the Terraform Plugin Framework, which ensures compatibility with both Terraform and OpenTofu.
+  - **Kinsta API Client:** A dedicated Go client will handle all HTTP requests, authentication, rate limiting, and error handling for the Kinsta API. It will need to manage long-running tasks via the `/operations` endpoint.
+- **Data Models:** The provider will define a schema for each resource that maps Kinsta API JSON responses to the configuration language's attribute map.
+- **APIs and Integrations:** The provider will exclusively use the official Kinsta REST API.
+- **Infrastructure Requirements:** Users will need OpenTofu (any version) or Terraform (v1.0+ up to v1.5.7) installed. The provider binary will be distributed via the Terraform Registry and OpenTofu Registry.
+
+## Development Roadmap
+### Phase 1: MVP - Core Application & Database Hosting
+- **Goal:** Deliver fundamental resource management for both Terraform and OpenTofu.
+1.  **Provider Foundation:** Implement the provider configuration and the Kinsta API client.
+2.  **Database Resource:** Implement the `kinsta_database` resource (CRUD) and data source.
+3.  **Application Resource:** Implement the `kinsta_application` resource (CRUD) and data source.
+4.  **Acceptance Tests:** Write comprehensive acceptance tests that run against both `terraform` and `tofu` CLIs.
+5.  **Registry Publishing:** Publish the initial version to the Terraform and OpenTofu Registries.
+
+### Phase 2: WordPress Hosting
+- **Goal:** Add support for Kinsta's flagship WordPress product.
+1.  **WordPress Resource:** Implement the `kinsta_wordpress_site` resource (CRUD) and data source.
+2.  **Environment Management:** Add functionality to manage staging environments.
+3.  **Tools Integration:** Implement resources to manage site tools, such as `kinsta_site_php_version` or `kinsta_site_cache`.
+
+### Phase 3: Completeness & Advanced Features
+- **Goal:** Achieve near-full coverage of the Kinsta API.
+1.  **DNS Management:** Implement resources for `kinsta_dns_record`.
+2.  **Static Site Hosting:** Implement `kinsta_static_site` resource and data source.
+3.  **Utility Data Sources:** Add data sources for fetching utility information, like `kinsta_datacenters`.
+
+## Logical Dependency Chain
+1.  **Provider Client:** The API client is the foundation.
+2.  **Database Resource:** A self-contained and logical starting point.
+3.  **Application Resource:** Builds on the client to provide a complete "application + database" stack.
+4.  **WordPress Resource:** Can be developed in parallel.
+5.  **Data Sources:** Should be built alongside their corresponding resources.
+
+## Risks and Mitigations
+- **Technical Challenge: Asynchronous Operations:** Many Kinsta API calls are long-running.
+  - **Mitigation:** The API client must poll the `/operations/{id}` endpoint with a configurable timeout.
+- **Technical Challenge: API Rate Limiting:** The Kinsta API has a rate limit.
+  - **Mitigation:** The client must implement a rate limiter and respect `RateLimit` headers.
+- **Risk: API Changes:** The Kinsta API is in public beta.
+  - **Mitigation:** A comprehensive suite of acceptance tests will detect breaking changes.
+- **Risk: Divergence:** Terraform and OpenTofu may diverge in the future.
+  - **Mitigation:** Stick to the shared Terraform Plugin Framework and avoid bleeding-edge, non-standard features. Prioritize OpenTofu compatibility if a choice must be made, per requirements.
+
+## Appendix
+- **Kinsta API Documentation:** https://kinsta.com/docs/kinsta-api/
+- **OpenTofu Website:** https://opentofu.org/
+- **Terraform Plugin Framework:** https://developer.hashicorp.com/terraform/plugin/framework

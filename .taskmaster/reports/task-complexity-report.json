@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2025-09-25T02:43:35.683Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Implement `kinsta_database` Resource with Acceptance Tests",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task of implementing the `kinsta_database` resource. The subtasks should follow the logical progression of building a Terraform resource: 1. Define the resource schema and scaffold the file structure in `internal/provider/database_resource.go`. 2. Implement the `Create` function, including API client calls and using `WaitUntilOperationFinished`. 3. Implement the `Read` and `Delete` functions. 4. Implement the `Update` function to handle changes to attributes. 5. Write a comprehensive acceptance test in `internal/provider/database_resource_test.go` covering the create, read, update, and destroy lifecycle.",
+			"reasoning": "Codebase analysis shows no existing resources, making this the foundational implementation. Complexity is high (7/10) because it requires establishing the patterns for all future resources, including file structure, CRUD implementation, client interaction, and the acceptance test harness. The `WaitUntilOperationFinished` helper in `internal/client/client.go` reduces some complexity, but setting up everything from scratch is a significant effort."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement `kinsta_database` and `kinsta_databases` Data Sources",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task of implementing the `kinsta_database` and `kinsta_databases` data sources. Create separate subtasks for the singular and plural data sources. For each, include a subtask for implementation (defining the schema, implementing the read function, and registering it) and a subtask for writing the corresponding acceptance test.",
+			"reasoning": "Codebase analysis confirms no data sources exist. This task has medium complexity (5/10) because it establishes the pattern for all future data sources. While simpler than a resource (read-only), it involves creating two distinct components (singular and plural) and setting up the data source testing pattern for the first time. The work is split between `database_data_source.go` and `databases_data_source.go`."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement `kinsta_application` Resource with Acceptance Tests",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task of implementing the `kinsta_application` resource. The subtasks should mirror the structure of a standard resource implementation: 1. Define the application resource schema and create the `application_resource.go` file. 2. Implement the `Create` function, handling the API call to deploy an application from a Git repository and waiting for completion. 3. Implement the `Read` and `Delete` functions. 4. Implement the `Update` function to handle changes like updating the branch. 5. Write a robust acceptance test that uses a public Git repository and has appropriate timeouts for the deployment process.",
+			"reasoning": "This task is less complex than the first resource because patterns will have been established by `kinsta_database`. However, the `application` resource has a more complex schema (Git repo, build packs) and a more involved lifecycle (long deployments) than a database, justifying a complexity score of 6/10. The developer can reuse the structure from `database_resource.go` but will need to implement new API client methods and a more complex acceptance test."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement `kinsta_application` and `kinsta_applications` Data Sources",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task of implementing the `kinsta_application` and `kinsta_applications` data sources. Following the established pattern, create subtasks for: 1. Implementing the singular `kinsta_application` data source. 2. Writing an acceptance test for the singular data source. 3. Implementing the plural `kinsta_applications` data source. 4. Writing an acceptance test for the plural data source.",
+			"reasoning": "This is a standard implementation task with a complexity of 4/10. By this point, the patterns for creating singular and plural data sources and their tests will have been established by Task 2. The work involves copying the existing structure, defining a new schema for applications, and implementing the corresponding API client calls. It's a straightforward application of existing patterns."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Implement `kinsta_wordpress_site` Resource with Acceptance Tests",
+			"complexityScore": 5,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task of implementing the `kinsta_wordpress_site` resource. The subtasks should follow the established CRUD + testing pattern: 1. Define the resource schema in `wordpress_site_resource.go`, ensuring `admin_password` is marked as sensitive. 2. Implement the `Create` function. 3. Implement the `Read` and `Delete` functions. 4. Implement the `Update` function. 5. Write a full lifecycle acceptance test, ensuring the sensitive password is handled correctly.",
+			"reasoning": "Complexity is medium (5/10). This is a standard resource implementation now that the groundwork is laid by Task 1 and 3. The developer can follow the established patterns in `database_resource.go` and `application_resource.go`. The complexity is slightly lower than the application resource as the entity is likely less complex, though it does introduce handling a `Sensitive` attribute for the password, which is a new detail."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement `kinsta_wordpress_site` and `kinsta_wordpress_sites` Data Sources",
+			"complexityScore": 3,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task of implementing the `kinsta_wordpress_site` and `kinsta_wordpress_sites` data sources. Create four subtasks based on the existing pattern: 1. Implement the singular `kinsta_wordpress_site` data source. 2. Write its acceptance test. 3. Implement the plural `kinsta_wordpress_sites` data source. 4. Write its acceptance test.",
+			"reasoning": "This is a low-complexity task (3/10). At this stage, all necessary patterns for implementing and testing both singular and plural data sources are well-established in the codebase. The work is predictable, consisting of creating new files that are variations of existing data source implementations, making it a routine task."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Enhance API Client with Rate Limiting",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task of adding rate limiting to the API client. The subtasks should be: 1. Research and select a rate-limiting library (e.g., `golang.org/x/time/rate`) or design a custom implementation. 2. Modify the `Client` struct and core request method in `internal/client/client.go` to parse and track rate limit headers. 3. Implement the core rate-limiting logic that pauses requests when the limit is approached, ensuring it is concurrency-safe. 4. Write unit tests for the client, using mocked HTTP responses to simulate rate-limiting headers and verifying that the client waits for the correct duration.",
+			"reasoning": "This task has high complexity (7/10). It involves modifying `internal/client/client.go`, a critical, shared component. The implementation must be concurrency-safe and requires careful handling of time. As noted in the test strategy, verification relies on unit tests with mocked responses rather than straightforward acceptance tests, which adds to the implementation difficulty."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Generate and Write Resource Documentation",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task of creating documentation. The subtasks should be: 1. Integrate the `tfplugindocs` tool into the project (e.g., via a `Makefile` target) and run it to generate the initial boilerplate for all resources and data sources. 2. Manually review and enhance the generated documentation for the `kinsta_database` resource and its data sources, adding clear examples and descriptions. 3. Do the same for the `kinsta_application` resource and data sources. 4. Do the same for the `kinsta_wordpress_site` resource and data sources.",
+			"reasoning": "The technical complexity is low, but the effort is moderate, leading to a score of 4/10. Analysis shows the `docs/` directory is empty and no tooling is present. The task involves first setting up `tfplugindocs` and then performing the time-consuming work of manually writing high-quality examples and descriptions for 3 resources and their corresponding data sources. The bulk of the work is content creation, not coding."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Set up CI to Test Against Terraform and OpenTofu",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task of setting up CI for both Terraform and OpenTofu. The subtasks should be: 1. Modify the `.github/workflows/test.yml` file to add a `strategy: matrix:` with entries for `terraform` and `opentofu`. 2. Add a step within the test job to conditionally download and install the appropriate binary based on the value from the matrix. 3. Ensure the `make testacc` step (or equivalent) runs correctly for both jobs in the matrix and that secrets are properly configured.",
+			"reasoning": "This is a low-complexity task (3/10). Analysis of the project structure indicates a standard `.github/workflows/test.yml` file exists. The task is a straightforward modification of this YAML file to add a build matrix, a common GitHub Actions pattern. The logic is simple and contained within a single configuration file."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Configure Release Workflow for Registry Publishing",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task of configuring the release workflow. The subtasks should be: 1. Create a `.goreleaser.yml` file with the basic configuration to build the provider for multiple platforms/architectures. 2. Create a new GitHub Actions workflow file (`.github/workflows/release.yml`) that triggers on new tags and runs the `goreleaser` command. 3. Configure GPG signing in `.goreleaser.yml` and set up the necessary `GPG_PRIVATE_KEY` and `GPG_PASSPHRASE` secrets in the GitHub repository. 4. Test the entire process by pushing a test tag and verifying that a draft GitHub release is created with the correctly signed binaries and checksums.",
+			"reasoning": "Complexity is medium-high (6/10). Codebase analysis shows no existing release workflow or `.goreleaser.yml` file. This is a greenfield CI task that requires creating and configuring `goreleaser` to meet the specific signing and artifact requirements of the Terraform Registry, which can be finicky. Setting up GPG signing and managing secrets correctly adds to the complexity."
+		}
+	]
+}

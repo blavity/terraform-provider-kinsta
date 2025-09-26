@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'
+      - name: Run unit tests
+        run: go test -v ./...
+      - name: Run acceptance tests
+        if: github.event_name == 'pull_request'
+        run: TF_ACC=true go test -v ./...
+        env:
+          KINSTA_API_KEY: ${{ secrets.KINSTA_API_KEY }}
+          KINSTA_COMPANY_ID: ${{ secrets.KINSTA_COMPANY_ID }}
