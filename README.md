@@ -8,7 +8,7 @@ Terraform provider for managing Kinsta resources.
 terraform {
   required_providers {
     kinsta = {
-      source = "kinsta/kinsta"
+      source = "blavity/kinsta"
       # It's a good practice to pin the version of the provider.
       # version = "x.y.z"
     }
