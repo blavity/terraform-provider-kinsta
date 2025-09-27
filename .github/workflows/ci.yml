@@ -22,4 +22,4 @@ jobs:
         run: TF_ACC=true go test -v ./...
         env:
           KINSTA_API_KEY: ${{ secrets.KINSTA_API_KEY }}
-          KINSTA_COMPANY_ID: ${{ secrets.KINSTA_COMPANY_ID }}
+          KINSTA_COMPANY_ID: ${{ vars.KINSTA_COMPANY_ID }}
