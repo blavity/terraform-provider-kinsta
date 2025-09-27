@@ -2,12 +2,12 @@ package provider
 
 import (
 	"context"
-	"math/rand"
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
+	"math/rand"
+	"time"
 )
 
 func resourceDatabase() *schema.Resource {
@@ -78,6 +78,26 @@ func resourceDatabaseCreate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	d.SetId(resp.Database.ID)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"creating"},
+		Target:     []string{"ready"},
+		Refresh: func() (interface{}, string, error) {
+			dbResp, err := c.GetDatabase(ctx, resp.Database.ID)
+			if err != nil {
+				return nil, "", err
+			}
+			return dbResp, dbResp.Database.Status, nil
+		},
+		Timeout:    10 * time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 5 * time.Second,
+	}
+
+	_, err = stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return resourceDatabaseRead(ctx, d, m)
 }

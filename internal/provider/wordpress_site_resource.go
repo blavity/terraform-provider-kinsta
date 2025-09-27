@@ -3,8 +3,10 @@ package provider
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
+	"time"
 )
 
 func resourceWordPressSite() *schema.Resource {
@@ -65,7 +67,28 @@ func resourceWordPressSiteCreate(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	d.SetId(resp.OperationID)
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"creating"},
+		Target:     []string{"finished"},
+		Refresh: func() (interface{}, string, error) {
+			opResp, err := c.GetOperation(ctx, resp.OperationID)
+			if err != nil {
+				return nil, "", err
+			}
+			return opResp, opResp.Status, nil
+		},
+		Timeout:    10 * time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 5 * time.Second,
+	}
+
+	opRaw, err := stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	op := opRaw.(*client.GetOperationResponse)
+	d.SetId(op.SiteID)
 
 	return resourceWordPressSiteRead(ctx, d, m)
 }

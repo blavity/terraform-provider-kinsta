@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
@@ -22,10 +23,12 @@ type Client struct {
 
 func New(apiKey, companyID string) *Client {
 	return &Client{
-		apiKey:     apiKey,
-		companyID:  companyID,
-		baseURL:    DefaultBaseURL,
-		httpClient: &http.Client{},
+		apiKey:    apiKey,
+		companyID: companyID,
+		baseURL:   DefaultBaseURL,
+		httpClient: &http.Client{
+			Timeout: 5 * time.Minute,
+		},
 	}
 }
 
@@ -193,6 +196,11 @@ type DeleteWordPressSiteResponse struct {
 	Status      int    `json:"status"`
 }
 
+type GetOperationResponse struct {
+	Status string `json:"status"`
+	SiteID string `json:"site_id"`
+}
+
 type KinstaClient interface {
 	CompanyID() string
 	CreateDatabase(ctx context.Context, req *CreateDatabaseRequest) (*CreateDatabaseResponse, error)
@@ -206,10 +214,22 @@ type KinstaClient interface {
 	CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error)
 	GetWordPressSite(ctx context.Context, id string) (*GetWordPressSiteResponse, error)
 	DeleteWordPressSite(ctx context.Context, id string) (*DeleteWordPressSiteResponse, error)
+	GetOperation(ctx context.Context, id string) (*GetOperationResponse, error)
 }
 
 func (c *Client) CompanyID() string {
 	return c.companyID
+}
+func (c *Client) GetOperation(ctx context.Context, id string) (*GetOperationResponse, error) {
+	var getResponse GetOperationResponse
+
+	path := fmt.Sprintf("/operations/%s", id)
+	err := c.do(ctx, http.MethodGet, path, nil, &getResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &getResponse, nil
 }
 
 func (c *Client) CreateDatabase(ctx context.Context, req *CreateDatabaseRequest) (*CreateDatabaseResponse, error) {

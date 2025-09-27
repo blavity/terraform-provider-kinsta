@@ -3,8 +3,10 @@ package provider
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
+	"time"
 )
 
 func resourceApplication() *schema.Resource {
@@ -46,6 +48,26 @@ func resourceApplicationCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	d.SetId(resp.Application.ID)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"creating"},
+		Target:     []string{"ready"},
+		Refresh: func() (interface{}, string, error) {
+			appResp, err := c.GetApplication(ctx, resp.Application.ID)
+			if err != nil {
+				return nil, "", err
+			}
+			return appResp, appResp.Application.Status, nil
+		},
+		Timeout:    10 * time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 5 * time.Second,
+	}
+
+	_, err = stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return resourceApplicationRead(ctx, d, m)
 }
