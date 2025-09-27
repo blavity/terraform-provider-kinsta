@@ -16,6 +16,7 @@ type mockWordPressSiteKinstaClient struct {
 	createWordPressSite func(ctx context.Context, req *client.CreateWordPressSiteRequest) (*client.CreateWordPressSiteResponse, error)
 	getWordPressSite    func(ctx context.Context, id string) (*client.GetWordPressSiteResponse, error)
 	deleteWordPressSite func(ctx context.Context, id string) (*client.DeleteWordPressSiteResponse, error)
+	getOperation        func(ctx context.Context, id string) (*client.GetOperationResponse, error)
 }
 
 func (m *mockWordPressSiteKinstaClient) CompanyID() string {
@@ -34,13 +35,30 @@ func (m *mockWordPressSiteKinstaClient) DeleteWordPressSite(ctx context.Context,
 	return m.deleteWordPressSite(ctx, id)
 }
 
+func (m *mockWordPressSiteKinstaClient) GetOperation(ctx context.Context, id string) (*client.GetOperationResponse, error) {
+	return m.getOperation(ctx, id)
+}
+
 func Test_resourceWordPressSiteCreate(t *testing.T) {
 	t.Run("successful creation", func(t *testing.T) {
+		getOperationCallCount := 0
 		mockClient := &mockWordPressSiteKinstaClient{
 			companyID: "test-company-id",
 			createWordPressSite: func(ctx context.Context, req *client.CreateWordPressSiteRequest) (*client.CreateWordPressSiteResponse, error) {
 				return &client.CreateWordPressSiteResponse{
 					OperationID: "test-operation-id",
+				}, nil
+			},
+			getOperation: func(ctx context.Context, id string) (*client.GetOperationResponse, error) {
+				getOperationCallCount++
+				if getOperationCallCount < 2 {
+					return &client.GetOperationResponse{
+						Status: "creating",
+					}, nil
+				}
+				return &client.GetOperationResponse{
+					Status: "finished",
+					SiteID: "test-site-id",
 				}, nil
 			},
 			getWordPressSite: func(ctx context.Context, id string) (*client.GetWordPressSiteResponse, error) {
@@ -67,7 +85,7 @@ func Test_resourceWordPressSiteCreate(t *testing.T) {
 		diags := resourceWordPressSiteCreate(context.Background(), d, mockClient)
 
 		assert.False(t, diags.HasError())
-		assert.Equal(t, "test-operation-id", d.Id())
+		assert.Equal(t, "test-site-id", d.Id())
 	})
 
 	t.Run("failed creation", func(t *testing.T) {
