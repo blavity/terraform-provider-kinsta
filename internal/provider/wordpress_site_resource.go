@@ -22,13 +22,20 @@ func resourceWordPressSite() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"admin_email": {
+			"install_mode": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "new",
+			},
+			"admin_email": {
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"admin_password": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				Sensitive: true,
 			},
 			"admin_user": {
 				Type:     schema.TypeString,
@@ -40,7 +47,17 @@ func resourceWordPressSite() *schema.Resource {
 			},
 			"wp_language": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "en_US",
+			},
+			// Computed outputs
+			"site_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"environment_id": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 		},
 	}
@@ -50,37 +67,52 @@ func resourceWordPressSiteCreate(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(client.KinstaClient)
 
 	req := &client.CreateWordPressSiteRequest{
-		Company:      c.CompanyID(),
-		DisplayName:  d.Get("display_name").(string),
-		Region:       d.Get("region").(string),
-		AdminEmail:   d.Get("admin_email").(string),
+		Company:       c.CompanyID(),
+		DisplayName:   d.Get("display_name").(string),
+		Region:        d.Get("region").(string),
+		InstallMode:   d.Get("install_mode").(string),
+		AdminEmail:    d.Get("admin_email").(string),
 		AdminPassword: d.Get("admin_password").(string),
-		AdminUser:    d.Get("admin_user").(string),
-		SiteTitle:    d.Get("site_title").(string),
-		WPLanguage:   d.Get("wp_language").(string),
+		AdminUser:     d.Get("admin_user").(string),
+		SiteTitle:     d.Get("site_title").(string),
+		WPLanguage:    d.Get("wp_language").(string),
 	}
 
+	// Create site (async operation)
 	resp, err := c.CreateWordPressSite(ctx, req)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(resp.OperationID)
+	// Poll operation until complete
+	siteID, err := c.PollOperation(ctx, resp.OperationID)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
+	// Set the site_id as the Terraform resource ID
+	d.SetId(siteID)
+
+	// Read the site to populate computed attributes
 	return resourceWordPressSiteRead(ctx, d, m)
 }
 
 func resourceWordPressSiteRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(client.KinstaClient)
-	id := d.Id()
+	siteID := d.Id()
 
-	resp, err := c.GetWordPressSite(ctx, id)
+	resp, err := c.GetWordPressSite(ctx, siteID)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
+	d.Set("site_id", resp.Site.ID)
 	d.Set("display_name", resp.Site.DisplayName)
-	d.Set("region", resp.Site.Region)
+
+	// Extract environment_id from the first environment (usually "live")
+	if len(resp.Site.Environments) > 0 {
+		d.Set("environment_id", resp.Site.Environments[0].ID)
+	}
 
 	return nil
 }

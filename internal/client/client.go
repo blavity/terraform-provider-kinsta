@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const (
@@ -159,14 +160,15 @@ type DeleteApplicationResponse struct {
 }
 
 type CreateWordPressSiteRequest struct {
-	Company      string `json:"company"`
-	DisplayName  string `json:"display_name"`
-	Region       string `json:"region"`
-	AdminEmail   string `json:"admin_email"`
+	Company       string `json:"company"`
+	DisplayName   string `json:"display_name"`
+	Region        string `json:"region"`
+	InstallMode   string `json:"install_mode"`
+	AdminEmail    string `json:"admin_email"`
 	AdminPassword string `json:"admin_password"`
-	AdminUser    string `json:"admin_user"`
-	SiteTitle    string `json:"site_title"`
-	WPLanguage   string `json:"wp_language"`
+	AdminUser     string `json:"admin_user"`
+	SiteTitle     string `json:"site_title"`
+	WPLanguage    string `json:"wp_language"`
 }
 
 type CreateWordPressSiteResponse struct {
@@ -176,11 +178,17 @@ type CreateWordPressSiteResponse struct {
 }
 
 type WordPressSite struct {
+	ID           string                `json:"id"`
+	Name         string                `json:"name"`
+	DisplayName  string                `json:"display_name"`
+	Status       string                `json:"status"`
+	Environments []WordPressEnvironment `json:"environments"`
+}
+
+type WordPressEnvironment struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	DisplayName string `json:"display_name"`
-	Status      string `json:"status"`
-	Region      string `json:"region"`
 }
 
 type GetWordPressSiteResponse struct {
@@ -191,6 +199,12 @@ type DeleteWordPressSiteResponse struct {
 	OperationID string `json:"operation_id"`
 	Message     string `json:"message"`
 	Status      int    `json:"status"`
+}
+
+type OperationResponse struct {
+	Status  int                    `json:"status"`
+	Message string                 `json:"message"`
+	Data    map[string]interface{} `json:"data,omitempty"`
 }
 
 type KinstaClient interface {
@@ -206,6 +220,7 @@ type KinstaClient interface {
 	CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error)
 	GetWordPressSite(ctx context.Context, id string) (*GetWordPressSiteResponse, error)
 	DeleteWordPressSite(ctx context.Context, id string) (*DeleteWordPressSiteResponse, error)
+	PollOperation(ctx context.Context, operationID string) (string, error)
 }
 
 func (c *Client) CompanyID() string {
@@ -364,4 +379,52 @@ func (c *Client) DeleteWordPressSite(ctx context.Context, id string) (*DeleteWor
 	}
 
 	return &deleteResponse, nil
+}
+
+func (c *Client) PollOperation(ctx context.Context, operationID string) (string, error) {
+	path := fmt.Sprintf("/operations/%s", operationID)
+
+	// Poll up to 5 minutes (60 attempts * 5 seconds)
+	for i := 0; i < 60; i++ {
+		var opResp OperationResponse
+		err := c.do(ctx, http.MethodGet, path, nil, &opResp)
+
+		// Handle 404 (operation not initialized yet - retry)
+		if err != nil && i < 5 {
+			// Retry for first 25 seconds (5 * 5s) as docs mention delay in operation initialization
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case <-time.After(5 * time.Second):
+				continue
+			}
+		}
+
+		if err != nil {
+			return "", err
+		}
+
+		// 200 = complete, 202 = in progress, 500 = failed
+		if opResp.Status == 200 {
+			// Extract site_id from operation response data
+			if siteID, ok := opResp.Data["site_id"].(string); ok {
+				return siteID, nil
+			}
+			return "", fmt.Errorf("operation completed but no site_id in response")
+		}
+
+		if opResp.Status == 500 {
+			return "", fmt.Errorf("operation failed: %s", opResp.Message)
+		}
+
+		// Still in progress (202), wait and retry
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(5 * time.Second):
+			continue
+		}
+	}
+
+	return "", fmt.Errorf("operation timed out after 5 minutes")
 }
