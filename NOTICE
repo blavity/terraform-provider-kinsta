@@ -1,0 +1,38 @@
+Terraform Provider for Kinsta
+Copyright (c) 2024 Blavity, Inc.
+
+This provider is developed and maintained by Blavity, Inc. and is NOT officially 
+supported by Kinsta.
+
+IMPORTANT DISCLAIMERS:
+======================
+
+1. TRADEMARK NOTICE:
+   - "Kinsta" and all related trademarks, service marks, and logos are the property 
+     of Kinsta Inc.
+   - This provider is not endorsed, sponsored, or affiliated with Kinsta Inc.
+   - Use of the Kinsta name is for identification purposes only.
+
+2. NO WARRANTY:
+   This provider is provided "AS IS" without warranty of any kind, express or implied,
+   including but not limited to the warranties of merchantability, fitness for a 
+   particular purpose, and non-infringement.
+
+3. NO SUPPORT:
+   - Blavity, Inc. provides this provider as-is with no official support commitment.
+   - Kinsta Inc. provides no support for this provider.
+   - Community support may be available through GitHub issues.
+
+4. LIMITATION OF LIABILITY:
+   In no event shall Blavity, Inc. or Kinsta Inc. be liable for any claim, damages,
+   or other liability arising from the use of this provider.
+
+5. INDEPENDENT DEVELOPMENT:
+   This provider was independently developed by Blavity, Inc. to interact with 
+   publicly available Kinsta APIs. It is not an official Kinsta product.
+
+6. USE AT YOUR OWN RISK:
+   Users of this provider assume all risks associated with its use. Always test
+   thoroughly in non-production environments before deploying to production.
+
+For the full license terms, see the LICENSE file in this repository.
