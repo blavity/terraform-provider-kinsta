@@ -118,47 +118,6 @@ type DeleteDatabaseResponse struct {
 	Message string `json:"message"`
 }
 
-type CreateApplicationRequest struct {
-	CompanyID   string `json:"company_id"`
-	DisplayName string `json:"display_name"`
-	Name        string `json:"name"`
-	Region      string `json:"region"`
-}
-
-type CreateApplicationResponse struct {
-	Application struct {
-		ID string `json:"id"`
-	} `json:"application"`
-}
-
-type Application struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
-	Status      string `json:"status"`
-	Region      string `json:"region"`
-}
-
-type GetApplicationResponse struct {
-	Application Application `json:"app"`
-}
-
-type UpdateApplicationRequest struct {
-	DisplayName string `json:"display_name,omitempty"`
-}
-
-type UpdateApplicationResponse struct {
-	Application struct {
-		ID          string `json:"id"`
-		DisplayName string `json:"display_name"`
-		Status      string `json:"status"`
-	} `json:"app"`
-}
-
-type DeleteApplicationResponse struct {
-	Message string `json:"message"`
-}
-
 type CreateWordPressSiteRequest struct {
 	Company       string `json:"company"`
 	DisplayName   string `json:"display_name"`
@@ -195,6 +154,12 @@ type GetWordPressSiteResponse struct {
 	Site WordPressSite `json:"site"`
 }
 
+type GetWordPressSitesResponse struct {
+	Company struct {
+		Sites []WordPressSite `json:"sites"`
+	} `json:"company"`
+}
+
 type DeleteWordPressSiteResponse struct {
 	OperationID string `json:"operation_id"`
 	Message     string `json:"message"`
@@ -207,19 +172,45 @@ type OperationResponse struct {
 	Data    map[string]interface{} `json:"data,omitempty"`
 }
 
+type CreateWordPressEnvironmentRequest struct {
+	DisplayName   string `json:"display_name"`
+	SiteTitle     string `json:"site_title"`
+	IsPremium     bool   `json:"is_premium"`
+	AdminEmail    string `json:"admin_email"`
+	AdminPassword string `json:"admin_password"`
+	AdminUser     string `json:"admin_user"`
+	WPLanguage    string `json:"wp_language"`
+}
+
+type CreateWordPressEnvironmentResponse struct {
+	OperationID string `json:"operation_id"`
+	Message     string `json:"message"`
+	Status      int    `json:"status"`
+}
+
+type GetWordPressEnvironmentResponse struct {
+	Environment WordPressEnvironment `json:"environment"`
+}
+
+type DeleteWordPressEnvironmentResponse struct {
+	OperationID string `json:"operation_id"`
+	Message     string `json:"message"`
+	Status      int    `json:"status"`
+}
+
 type KinstaClient interface {
 	CompanyID() string
 	CreateDatabase(ctx context.Context, req *CreateDatabaseRequest) (*CreateDatabaseResponse, error)
 	GetDatabase(ctx context.Context, id string) (*GetDatabaseResponse, error)
 	UpdateDatabase(ctx context.Context, id string, req *UpdateDatabaseRequest) (*UpdateDatabaseResponse, error)
 	DeleteDatabase(ctx context.Context, id string) (*DeleteDatabaseResponse, error)
-	CreateApplication(ctx context.Context, req *CreateApplicationRequest) (*CreateApplicationResponse, error)
-	GetApplication(ctx context.Context, id string) (*GetApplicationResponse, error)
-	UpdateApplication(ctx context.Context, id string, req *UpdateApplicationRequest) (*UpdateApplicationResponse, error)
-	DeleteApplication(ctx context.Context, id string) (*DeleteApplicationResponse, error)
 	CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error)
 	GetWordPressSite(ctx context.Context, id string) (*GetWordPressSiteResponse, error)
+	GetWordPressSites(ctx context.Context) (*GetWordPressSitesResponse, error)
 	DeleteWordPressSite(ctx context.Context, id string) (*DeleteWordPressSiteResponse, error)
+	CreateWordPressEnvironment(ctx context.Context, siteID string, req *CreateWordPressEnvironmentRequest) (*CreateWordPressEnvironmentResponse, error)
+	GetWordPressEnvironment(ctx context.Context, siteID, envID string) (*GetWordPressEnvironmentResponse, error)
+	DeleteWordPressEnvironment(ctx context.Context, envID string) (*DeleteWordPressEnvironmentResponse, error)
 	PollOperation(ctx context.Context, operationID string) (string, error)
 }
 
@@ -284,63 +275,6 @@ func (c *Client) DeleteDatabase(ctx context.Context, id string) (*DeleteDatabase
 	return &deleteResponse, nil
 }
 
-func (c *Client) CreateApplication(ctx context.Context, req *CreateApplicationRequest) (*CreateApplicationResponse, error) {
-	var createResponse CreateApplicationResponse
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.do(ctx, http.MethodPost, "/applications", bytes.NewBuffer(body), &createResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &createResponse, nil
-}
-
-func (c *Client) GetApplication(ctx context.Context, id string) (*GetApplicationResponse, error) {
-	var getResponse GetApplicationResponse
-
-	path := fmt.Sprintf("/applications/%s", id)
-	err := c.do(ctx, http.MethodGet, path, nil, &getResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &getResponse, nil
-}
-
-func (c *Client) UpdateApplication(ctx context.Context, id string, req *UpdateApplicationRequest) (*UpdateApplicationResponse, error) {
-	var updateResponse UpdateApplicationResponse
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("/applications/%s", id)
-	err = c.do(ctx, http.MethodPut, path, bytes.NewBuffer(body), &updateResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &updateResponse, nil
-}
-
-func (c *Client) DeleteApplication(ctx context.Context, id string) (*DeleteApplicationResponse, error) {
-	var deleteResponse DeleteApplicationResponse
-
-	path := fmt.Sprintf("/applications/%s", id)
-	err := c.do(ctx, http.MethodDelete, path, nil, &deleteResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &deleteResponse, nil
-}
-
 func (c *Client) CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error) {
 	var createResponse CreateWordPressSiteResponse
 
@@ -369,10 +303,64 @@ func (c *Client) GetWordPressSite(ctx context.Context, id string) (*GetWordPress
 	return &getResponse, nil
 }
 
+func (c *Client) GetWordPressSites(ctx context.Context) (*GetWordPressSitesResponse, error) {
+	var getResponse GetWordPressSitesResponse
+
+	path := fmt.Sprintf("/sites?company=%s", c.companyID)
+	err := c.do(ctx, http.MethodGet, path, nil, &getResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &getResponse, nil
+}
+
 func (c *Client) DeleteWordPressSite(ctx context.Context, id string) (*DeleteWordPressSiteResponse, error) {
 	var deleteResponse DeleteWordPressSiteResponse
 
 	path := fmt.Sprintf("/sites/%s", id)
+	err := c.do(ctx, http.MethodDelete, path, nil, &deleteResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &deleteResponse, nil
+}
+
+func (c *Client) CreateWordPressEnvironment(ctx context.Context, siteID string, req *CreateWordPressEnvironmentRequest) (*CreateWordPressEnvironmentResponse, error) {
+	var createResponse CreateWordPressEnvironmentResponse
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/sites/%s/environments", siteID)
+	err = c.do(ctx, http.MethodPost, path, bytes.NewBuffer(body), &createResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &createResponse, nil
+}
+
+func (c *Client) GetWordPressEnvironment(ctx context.Context, siteID, envID string) (*GetWordPressEnvironmentResponse, error) {
+	var getResponse GetWordPressEnvironmentResponse
+
+	// Use environment ID directly - Kinsta API doesn't require site_id for GET
+	path := fmt.Sprintf("/sites/environments/%s", envID)
+	err := c.do(ctx, http.MethodGet, path, nil, &getResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &getResponse, nil
+}
+
+func (c *Client) DeleteWordPressEnvironment(ctx context.Context, envID string) (*DeleteWordPressEnvironmentResponse, error) {
+	var deleteResponse DeleteWordPressEnvironmentResponse
+
+	path := fmt.Sprintf("/sites/environments/%s", envID)
 	err := c.do(ctx, http.MethodDelete, path, nil, &deleteResponse)
 	if err != nil {
 		return nil, err
@@ -406,15 +394,23 @@ func (c *Client) PollOperation(ctx context.Context, operationID string) (string,
 
 		// 200 = complete, 202 = in progress, 500 = failed
 		if opResp.Status == 200 {
-			// Extract site_id from operation response data
-			if siteID, ok := opResp.Data["site_id"].(string); ok {
+			// Extract resource ID from operation response data
+			// Kinsta API returns idSite for site creation, but may not return idEnv for environment creation
+			if siteID, ok := opResp.Data["idSite"].(string); ok {
 				return siteID, nil
 			}
-			return "", fmt.Errorf("operation completed but no site_id in response")
+			if envID, ok := opResp.Data["idEnv"].(string); ok {
+				return envID, nil
+			}
+
+			// Some operations (like environment creation) complete successfully but don't return resource IDs
+			// Return empty string to indicate success without ID - caller will need to fetch the resource
+			return "", nil
 		}
 
 		if opResp.Status == 500 {
-			return "", fmt.Errorf("operation failed: %s", opResp.Message)
+			dataJSON, _ := json.Marshal(opResp.Data)
+			return "", fmt.Errorf("operation failed: %s, data: %s", opResp.Message, string(dataJSON))
 		}
 
 		// Still in progress (202), wait and retry
@@ -427,4 +423,12 @@ func (c *Client) PollOperation(ctx context.Context, operationID string) (string,
 	}
 
 	return "", fmt.Errorf("operation timed out after 5 minutes")
+}
+
+func getMapKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

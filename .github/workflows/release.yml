@@ -3,24 +3,119 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+
+env:
+  REGISTRY_NAMESPACE: platform
+  REGISTRY_PROVIDER: kinsta
 
 jobs:
-  goreleaser:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run unit tests
+        run: go test ./...
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up Go
-        uses: actions/setup-go@v2
+
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+          go-version-file: go.mod
+
+      - name: Import GPG signing key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        if: secrets.KMS_KEY_RESOURCE == '' || secrets.KMS_KEY_RESOURCE == null
+
+      - name: Authenticate to GCP via Workload Identity
+        if: secrets.KMS_KEY_RESOURCE != '' && secrets.KMS_KEY_RESOURCE != null
+        uses: google-github-actions/auth@v2
+        id: auth
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Configure KMS-backed GPG (pkcs11)
+        if: secrets.KMS_KEY_RESOURCE != '' && secrets.KMS_KEY_RESOURCE != null
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gnupg gnupg-pkcs11-scd wget ca-certificates tar
+          wget -qO /tmp/libkmsp11.tar.gz https://github.com/GoogleCloudPlatform/kms-integrations/releases/download/v1.3.1/libkmsp11-1.3.1-linux-amd64.tar.gz
+          sudo mkdir -p /opt/libkmsp11
+          sudo tar -xzf /tmp/libkmsp11.tar.gz -C /opt/libkmsp11 --strip-components=1
+          mkdir -p ~/.gnupg
+          cat > ~/.gnupg/gpg-agent.conf <<'EOF'
+          allow-loopback-pinentry
+          default-cache-ttl 600
+          scdaemon-program /usr/lib/gnupg-pkcs11-scd
+          EOF
+          cat > ~/.gnupg/gnupg-pkcs11-scd.conf <<EOF
+          module: /opt/libkmsp11/libkmsp11.so
+          provider: libkmsp11
+          nss_init: none
+          slot: 0
+          pkcs11:token-label: kms-provider-signing
+          provider-privkey: ${KMS_KEY_RESOURCE}
+          EOF
+          chmod 700 ~/.gnupg
+          gpgconf --kill all || true
+          gpg --card-status || true
+        env:
+          KMS_KEY_RESOURCE: ${{ secrets.KMS_KEY_RESOURCE }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path || '' }}
+
+      - name: Build and publish release artifacts
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Resolve registry hostname
+        id: registry_host
+        run: |
+          host="${TERRAFORM_REGISTRY_HOSTNAME:-${REGISTRY_HOSTNAME:-}}"
+          if [ -z "$host" ]; then
+            echo "Set TERRAFORM_REGISTRY_HOSTNAME (preferred) or REGISTRY_HOSTNAME (fallback) secret, e.g., tf-registry.blavity.com" >&2
+            exit 1
+          fi
+          echo "hostname=$host" >> "$GITHUB_OUTPUT"
+        env:
+          TERRAFORM_REGISTRY_HOSTNAME: ${{ secrets.TERRAFORM_REGISTRY_HOSTNAME }}
+          REGISTRY_HOSTNAME: ${{ secrets.REGISTRY_HOSTNAME }}
+
+      - name: Generate registry metadata
+        run: scripts/build-registry.sh "${{ github.ref_name }}"
+        env:
+          TERRAFORM_REGISTRY_HOSTNAME: ${{ steps.registry_host.outputs.hostname }}
+          REGISTRY_HOSTNAME: ${{ steps.registry_host.outputs.hostname }}
+          REGISTRY_NAMESPACE: ${{ env.REGISTRY_NAMESPACE }}
+          REGISTRY_PROVIDER: ${{ env.REGISTRY_PROVIDER }}
+          GPG_PUBLIC_KEY: ${{ secrets.GPG_PUBLIC_KEY }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          # DOWNLOAD_BASE unset → defaults to GitHub Releases in build-registry.sh

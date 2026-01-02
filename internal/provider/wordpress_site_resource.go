@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kinsta/terraform-provider-kinsta/internal/client"
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func resourceWordPressSite() *schema.Resource {
@@ -13,6 +13,9 @@ func resourceWordPressSite() *schema.Resource {
 		ReadContext:   resourceWordPressSiteRead,
 		UpdateContext: resourceWordPressSiteUpdate,
 		DeleteContext: resourceWordPressSiteDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			"display_name": {
 				Type:     schema.TypeString,
@@ -109,9 +112,12 @@ func resourceWordPressSiteRead(ctx context.Context, d *schema.ResourceData, m in
 	d.Set("site_id", resp.Site.ID)
 	d.Set("display_name", resp.Site.DisplayName)
 
-	// Extract environment_id from the first environment (usually "live")
-	if len(resp.Site.Environments) > 0 {
-		d.Set("environment_id", resp.Site.Environments[0].ID)
+	// Extract environment_id for the live environment (site creation auto-creates live)
+	for _, env := range resp.Site.Environments {
+		if env.Name == "live" {
+			d.Set("environment_id", env.ID)
+			break
+		}
 	}
 
 	return nil

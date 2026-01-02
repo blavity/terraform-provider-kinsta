@@ -9,8 +9,21 @@ dev-debug.log
 # Dependency directories
 node_modules/
 
+# Go build/cache
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.gocache/
+.gomodcache/
+
 # Environment variables
 .env
+.env.*
 
 # Editor directories and files
 .idea
@@ -23,8 +36,26 @@ node_modules/
 
 # OS specific
 .DS_Store
+Thumbs.db
 
 # Task files
 # tasks.json
 # tasks/ 
 swagger.json
+
+# Build artifacts
+dist/
+registry/
+coverage/
+
+# GPG and signing artifacts (keep keys out of git)
+*.asc
+*.gpg
+*.key
+*.pem
+*.sig
+
+# Archive noise
+*.zip
+*.tar.gz
+*.tgz

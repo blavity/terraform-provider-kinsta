@@ -1,4 +1,4 @@
-module github.com/kinsta/terraform-provider-kinsta
+module github.com/blavity/terraform-provider-kinsta
 
 go 1.25.1
 
