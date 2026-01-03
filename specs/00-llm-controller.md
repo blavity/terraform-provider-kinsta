@@ -64,6 +64,29 @@ Required completion signals:
 - Pre-check function implemented
 - All tests pass with TF_ACC=1
 
+PHASE 5 (Kinsta) — Repository Cleanup & Finalization
+Completion marker: specs/03-phase-5-kinsta-complete.md
+Required completion signals:
+- Remove all Sevalla-related code from kinsta repo:
+  - Delete kinsta_database resource (deprecated, no users)
+  - Delete internal/client/database.go
+  - Delete database_resource.go, database_resource_test.go, database_resource_unit_test.go
+  - Delete docs/resources/database.md
+  - Delete examples using database resource
+- Clean up documentation:
+  - Archive/remove split analysis docs (PROVIDER_SPLIT_ANALYSIS*.md, SEVALLA_SPEC_FINDINGS.md)
+  - Archive phase completion markers to specs/archive/
+  - Update README.md to reflect Kinsta-only scope (WordPress resources only)
+- Update provider configuration:
+  - Confirm provider registration only includes WordPress resources
+  - Remove database resource from provider.go
+- Final validation:
+  - go vet ./... passes
+  - go build passes
+  - go test ./... passes (all unit tests)
+  - No references to "database" resource in codebase
+  - No references to "sevalla" in user-facing docs
+
 ## Sevalla Provider Phase Track
 
 PHASE 1 (Sevalla) — Sevalla repo bootstrap (new repo)
@@ -136,6 +159,25 @@ If you choose PHASE 4 (Kinsta):
 - Configure provider test factories
 - Implement pre-check function
 - Verify all tests pass with TF_ACC=1
+
+If you choose PHASE 5 (Kinsta):
+- Remove all database resource files:
+  - internal/provider/database_resource.go
+  - internal/provider/database_resource_test.go
+  - internal/provider/database_resource_unit_test.go
+  - internal/client/database.go
+  - docs/resources/database.md
+- Remove database from provider.go resource registration
+- Archive split-related docs to specs/archive/:
+  - PROVIDER_SPLIT_ANALYSIS.md
+  - PROVIDER_SPLIT_ANALYSIS_UPDATED.md
+  - SEVALLA_SPEC_FINDINGS.md
+  - PATCH_PLAN_*.md
+  - CORRECTIONS_APPLIED.md
+  - KINSTA_REMAINING_WORK.md
+- Update README.md to describe Kinsta-only scope
+- Run final validation (vet, build, test)
+- Create specs/03-phase-5-kinsta-complete.md
 
 ## Sevalla Provider Track
 

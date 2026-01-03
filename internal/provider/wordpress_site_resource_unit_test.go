@@ -279,7 +279,7 @@ func Test_resourceWordPressSiteDelete(t *testing.T) {
 }
 
 func Test_resourceWordPressSiteUpdate(t *testing.T) {
-	t.Run("update returns no diagnostics", func(t *testing.T) {
+	t.Run("update returns error because all fields are ForceNew", func(t *testing.T) {
 		mockClient := &mockWordPressSiteKinstaClient{
 			companyID: "test-company-id",
 		}
@@ -297,7 +297,8 @@ func Test_resourceWordPressSiteUpdate(t *testing.T) {
 
 		diags := resourceWordPressSiteUpdate(context.Background(), d, mockClient)
 
-		assert.False(t, diags.HasError())
+		assert.True(t, diags.HasError())
+		assert.Contains(t, diags[0].Summary, "does not support updates")
 	})
 }
 
@@ -338,8 +339,20 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	})
 
 	t.Run("all string fields have correct type", func(t *testing.T) {
+		// Boolean fields that are not strings
+		booleanFields := map[string]bool{
+			"is_multisite":           true,
+			"is_subdomain_multisite": true,
+			"woocommerce":            true,
+			"wordpressseo":           true,
+		}
+
 		for name, fieldSchema := range resource.Schema {
-			assert.Equal(t, schema.TypeString, fieldSchema.Type, "Field %s should be TypeString", name)
+			if booleanFields[name] {
+				assert.Equal(t, schema.TypeBool, fieldSchema.Type, "Field %s should be TypeBool", name)
+			} else {
+				assert.Equal(t, schema.TypeString, fieldSchema.Type, "Field %s should be TypeString", name)
+			}
 		}
 	})
 }

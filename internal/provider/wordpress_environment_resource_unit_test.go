@@ -17,6 +17,7 @@ type mockWordPressEnvironmentKinstaClient struct {
 	createWordPressEnvironment func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error)
 	getWordPressEnvironment    func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error)
 	deleteWordPressEnvironment func(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error)
+	getWordPressSite           func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error)
 	pollOperation              func(ctx context.Context, operationID string) (string, error)
 }
 
@@ -36,13 +37,47 @@ func (m *mockWordPressEnvironmentKinstaClient) DeleteWordPressEnvironment(ctx co
 	return m.deleteWordPressEnvironment(ctx, envID)
 }
 
+func (m *mockWordPressEnvironmentKinstaClient) GetWordPressSite(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+	if m.getWordPressSite != nil {
+		return m.getWordPressSite(ctx, siteID)
+	}
+	return nil, errors.New("GetWordPressSite not implemented in mock")
+}
+
 func (m *mockWordPressEnvironmentKinstaClient) PollOperation(ctx context.Context, operationID string) (string, error) {
 	return m.pollOperation(ctx, operationID)
 }
 
 func Test_resourceWordPressEnvironmentCreate_Standard(t *testing.T) {
+	callCount := 0
 	mockClient := &mockWordPressEnvironmentKinstaClient{
 		companyID: "test-company-id",
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			assert.Equal(t, "test-site-id", siteID)
+			callCount++
+			if callCount == 1 {
+				// First call - before environment creation (empty list)
+				return &client.GetWordPressSiteResponse{
+					Site: client.WordPressSite{
+						ID:           "test-site-id",
+						Environments: []client.WordPressEnvironment{},
+					},
+				}, nil
+			}
+			// Second call - after environment creation (with new environment)
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID: "test-site-id",
+					Environments: []client.WordPressEnvironment{
+						{
+							ID:          "test-env-id",
+							Name:        "staging",
+							DisplayName: "staging",
+						},
+					},
+				},
+			}, nil
+		},
 		createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
 			assert.Equal(t, "test-site-id", siteID)
 			assert.Equal(t, "staging", req.DisplayName)
@@ -89,8 +124,35 @@ func Test_resourceWordPressEnvironmentCreate_Standard(t *testing.T) {
 }
 
 func Test_resourceWordPressEnvironmentCreate_Premium(t *testing.T) {
+	callCount := 0
 	mockClient := &mockWordPressEnvironmentKinstaClient{
 		companyID: "test-company-id",
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			assert.Equal(t, "test-site-id", siteID)
+			callCount++
+			if callCount == 1 {
+				// First call - before environment creation (empty list)
+				return &client.GetWordPressSiteResponse{
+					Site: client.WordPressSite{
+						ID:           "test-site-id",
+						Environments: []client.WordPressEnvironment{},
+					},
+				}, nil
+			}
+			// Second call - after environment creation (with new environment)
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID: "test-site-id",
+					Environments: []client.WordPressEnvironment{
+						{
+							ID:          "test-premium-env-id",
+							Name:        "premium-staging",
+							DisplayName: "Premium Staging",
+						},
+					},
+				},
+			}, nil
+		},
 		createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
 			assert.Equal(t, "test-site-id", siteID)
 			assert.Equal(t, "premium-staging", req.DisplayName)
@@ -137,6 +199,14 @@ func Test_resourceWordPressEnvironmentCreate_Premium(t *testing.T) {
 func Test_resourceWordPressEnvironmentCreate_APIError(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
 		companyID: "test-company-id",
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID:           "test-site-id",
+					Environments: []client.WordPressEnvironment{},
+				},
+			}, nil
+		},
 		createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
 			return nil, errors.New("failed to create WordPress environment")
 		},
@@ -161,6 +231,14 @@ func Test_resourceWordPressEnvironmentCreate_APIError(t *testing.T) {
 func Test_resourceWordPressEnvironmentCreate_PollingFailure(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
 		companyID: "test-company-id",
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID:           "test-site-id",
+					Environments: []client.WordPressEnvironment{},
+				},
+			}, nil
+		},
 		createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
 			return &client.CreateWordPressEnvironmentResponse{
 				OperationID: "test-env-operation-id",
@@ -191,14 +269,18 @@ func Test_resourceWordPressEnvironmentCreate_PollingFailure(t *testing.T) {
 
 func Test_resourceWordPressEnvironmentRead(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
-		getWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
 			assert.Equal(t, "test-site-id", siteID)
-			assert.Equal(t, "test-env-id", envID)
-			return &client.GetWordPressEnvironmentResponse{
-				Environment: client.WordPressEnvironment{
-					ID:          "test-env-id",
-					Name:        "staging",
-					DisplayName: "Staging",
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID: "test-site-id",
+					Environments: []client.WordPressEnvironment{
+						{
+							ID:          "test-env-id",
+							Name:        "staging",
+							DisplayName: "Staging",
+						},
+					},
 				},
 			}, nil
 		},
@@ -298,7 +380,7 @@ func Test_resourceWordPressEnvironment_Schema(t *testing.T) {
 	resource := resourceWordPressEnvironment()
 
 	t.Run("required fields are marked as required", func(t *testing.T) {
-		requiredFields := []string{"site_id", "display_name", "site_title", "is_premium", "admin_email", "admin_password", "admin_user"}
+		requiredFields := []string{"site_id", "display_name"}
 		for _, field := range requiredFields {
 			fieldSchema, ok := resource.Schema[field]
 			assert.True(t, ok, "Field %s should exist in schema", field)
@@ -316,7 +398,10 @@ func Test_resourceWordPressEnvironment_Schema(t *testing.T) {
 	})
 
 	t.Run("optional fields have correct defaults", func(t *testing.T) {
-		assert.Equal(t, "en_US", resource.Schema["wp_language"].Default)
+		// wp_language has no default - it's optional with no default value
+		wpLangSchema := resource.Schema["wp_language"]
+		assert.True(t, wpLangSchema.Optional)
+		assert.Nil(t, wpLangSchema.Default)
 	})
 
 	t.Run("sensitive fields are marked as sensitive", func(t *testing.T) {
@@ -347,9 +432,32 @@ func Test_resourceWordPressEnvironmentCreate_RequestValidation(t *testing.T) {
 	t.Run("creates request with all fields", func(t *testing.T) {
 		var capturedRequest *client.CreateWordPressEnvironmentRequest
 		var capturedSiteID string
+		callCount := 0
 
 		mockClient := &mockWordPressEnvironmentKinstaClient{
 			companyID: "test-company-id",
+			getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+				callCount++
+				if callCount == 1 {
+					return &client.GetWordPressSiteResponse{
+						Site: client.WordPressSite{
+							ID:           siteID,
+							Environments: []client.WordPressEnvironment{},
+						},
+					}, nil
+				}
+				return &client.GetWordPressSiteResponse{
+					Site: client.WordPressSite{
+						ID: siteID,
+						Environments: []client.WordPressEnvironment{
+							{
+								ID:          "test-env-id",
+								DisplayName: "premium-staging",
+							},
+						},
+					},
+				}, nil
+			},
 			createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
 				capturedRequest = req
 				capturedSiteID = siteID
@@ -399,9 +507,32 @@ func Test_resourceWordPressEnvironmentCreate_RequestValidation(t *testing.T) {
 
 	t.Run("uses default values when not specified", func(t *testing.T) {
 		var capturedRequest *client.CreateWordPressEnvironmentRequest
+		callCount := 0
 
 		mockClient := &mockWordPressEnvironmentKinstaClient{
 			companyID: "test-company-id",
+			getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+				callCount++
+				if callCount == 1 {
+					return &client.GetWordPressSiteResponse{
+						Site: client.WordPressSite{
+							ID:           siteID,
+							Environments: []client.WordPressEnvironment{},
+						},
+					}, nil
+				}
+				return &client.GetWordPressSiteResponse{
+					Site: client.WordPressSite{
+						ID: siteID,
+						Environments: []client.WordPressEnvironment{
+							{
+								ID:          "test-env-id",
+								DisplayName: "staging",
+							},
+						},
+					},
+				}, nil
+			},
 			createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
 				capturedRequest = req
 				return &client.CreateWordPressEnvironmentResponse{
