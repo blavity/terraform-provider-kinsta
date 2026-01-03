@@ -5,19 +5,19 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type mockWordPressEnvironmentKinstaClient struct {
 	client.KinstaClient
-	companyID                   string
-	createWordPressEnvironment  func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error)
-	getWordPressEnvironment     func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error)
-	deleteWordPressEnvironment  func(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error)
-	pollOperation               func(ctx context.Context, operationID string) (string, error)
+	companyID                  string
+	createWordPressEnvironment func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error)
+	getWordPressEnvironment    func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error)
+	deleteWordPressEnvironment func(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error)
+	pollOperation              func(ctx context.Context, operationID string) (string, error)
 }
 
 func (m *mockWordPressEnvironmentKinstaClient) CompanyID() string {

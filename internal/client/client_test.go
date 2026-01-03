@@ -128,7 +128,7 @@ func TestPollOperation_NoSiteIDInResponse(t *testing.T) {
 		response := OperationResponse{
 			Status:  200,
 			Message: "Operation completed",
-			Data:    map[string]interface{}{
+			Data: map[string]interface{}{
 				// Missing site_id
 				"other_field": "value",
 			},

@@ -2,9 +2,9 @@ package provider
 
 import (
 	"context"
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func Provider() *schema.Provider {

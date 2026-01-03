@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -423,8 +423,8 @@ func Test_resourceWordPressSiteCreate_RequestValidation(t *testing.T) {
 			getWordPressSite: func(ctx context.Context, id string) (*client.GetWordPressSiteResponse, error) {
 				return &client.GetWordPressSiteResponse{
 					Site: client.WordPressSite{
-						ID:          "test-site-id",
-						DisplayName: "Test Site",
+						ID:           "test-site-id",
+						DisplayName:  "Test Site",
 						Environments: []client.WordPressEnvironment{},
 					},
 				}, nil

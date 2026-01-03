@@ -5,13 +5,19 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func resourceDatabase() *schema.Resource {
 	return &schema.Resource{
+		Description: "**DEPRECATED:** This resource is deprecated and will be removed in a future version. " +
+			"The MyKinsta databases API is deprecated in favor of the Sevalla API. " +
+			"Please use the sevalla_database resource from the terraform-provider-sevalla provider instead. " +
+			"See https://registry.terraform.io/providers/sevalla/sevalla for migration instructions.",
+		DeprecationMessage: "Use sevalla_database resource from terraform-provider-sevalla instead. " +
+			"This resource will be removed in v2.0.0.",
 		CreateContext: resourceDatabaseCreate,
 		ReadContext:   resourceDatabaseRead,
 		UpdateContext: resourceDatabaseUpdate,

@@ -79,17 +79,17 @@ type CreateDatabaseResponse struct {
 }
 
 type Database struct {
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	DisplayName    string `json:"display_name"`
-	Status         string `json:"status"`
-	CreatedAt      int64  `json:"created_at"`
-	MemoryLimit    int    `json:"memory_limit"`
-	CPULimit       int    `json:"cpu_limit"`
-	StorageSize    int    `json:"storage_size"`
-	Type           string `json:"type"`
-	Version        string `json:"version"`
-	Cluster        struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Status      string `json:"status"`
+	CreatedAt   int64  `json:"created_at"`
+	MemoryLimit int    `json:"memory_limit"`
+	CPULimit    int    `json:"cpu_limit"`
+	StorageSize int    `json:"storage_size"`
+	Type        string `json:"type"`
+	Version     string `json:"version"`
+	Cluster     struct {
 		ID          string `json:"id"`
 		Location    string `json:"location"`
 		DisplayName string `json:"display_name"`
@@ -119,15 +119,19 @@ type DeleteDatabaseResponse struct {
 }
 
 type CreateWordPressSiteRequest struct {
-	Company       string `json:"company"`
-	DisplayName   string `json:"display_name"`
-	Region        string `json:"region"`
-	InstallMode   string `json:"install_mode"`
-	AdminEmail    string `json:"admin_email"`
-	AdminPassword string `json:"admin_password"`
-	AdminUser     string `json:"admin_user"`
-	SiteTitle     string `json:"site_title"`
-	WPLanguage    string `json:"wp_language"`
+	Company              string `json:"company"`
+	DisplayName          string `json:"display_name"`
+	Region               string `json:"region"`
+	InstallMode          string `json:"install_mode"`
+	AdminEmail           string `json:"admin_email"`
+	AdminPassword        string `json:"admin_password"`
+	AdminUser            string `json:"admin_user"`
+	SiteTitle            string `json:"site_title"`
+	WPLanguage           string `json:"wp_language"`
+	IsMultisite          bool   `json:"is_multisite"`
+	IsSubdomainMultisite bool   `json:"is_subdomain_multisite"`
+	WooCommerce          bool   `json:"woocommerce"`
+	WordPressSEO         bool   `json:"wordpressseo"`
 }
 
 type CreateWordPressSiteResponse struct {
@@ -137,10 +141,10 @@ type CreateWordPressSiteResponse struct {
 }
 
 type WordPressSite struct {
-	ID           string                `json:"id"`
-	Name         string                `json:"name"`
-	DisplayName  string                `json:"display_name"`
-	Status       string                `json:"status"`
+	ID           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	DisplayName  string                 `json:"display_name"`
+	Status       string                 `json:"status"`
 	Environments []WordPressEnvironment `json:"environments"`
 }
 
