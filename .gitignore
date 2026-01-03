@@ -59,3 +59,6 @@ coverage/
 *.zip
 *.tar.gz
 *.tgz
+
+# Terraform provider binary
+terraform-provider-*
