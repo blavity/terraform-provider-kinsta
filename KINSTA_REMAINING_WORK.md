@@ -1,7 +1,7 @@
 # Kinsta Provider Remaining Work
 
-**Date:** 2026-01-02  
-**Status:** Phase 0 Complete for both providers  
+**Date:** 2026-01-03  
+**Status:** Phases 0-4 Complete for Kinsta provider  
 **Current Repository:** terraform-provider-kinsta (api.kinsta.com)
 
 ---
@@ -21,15 +21,21 @@
 - Phase 3: Data sources (applications, databases, static_sites, pipelines)
 - Phase 4: Deployment/action resources
 
+✅ **Kinsta Provider** - Phases 0-4 complete (this repository)
+- Phase 0: Documentation hygiene and architecture lock
+- Phase 1: Repository setup and client foundation
+- Phase 2: kinsta_database deprecation handling
+- Phase 3: WordPress site and environment resources
+- Phase 4: Acceptance tests for core resources
+
 ### What Remains for Kinsta Provider
 
 The Kinsta provider repository currently has:
-- ✅ `kinsta_wordpress_site` - Implemented, needs refinement
-- ✅ `kinsta_wordpress_environment` - Implemented, needs documentation
+- ✅ `kinsta_wordpress_site` - Implemented with unit + acceptance tests
+- ✅ `kinsta_wordpress_environment` - Implemented with unit + acceptance tests
 - ⏳ `kinsta_database` - **Deprecated immediately** (NO users), remove after migration window
 - ❌ WordPress domains, backups, SFTP, tools - Not yet implemented
 - ❌ Data sources - Not yet implemented
-- ❌ Comprehensive specs and documentation
 
 ---
 
@@ -65,34 +71,32 @@ ResourcesMap: map[string]*schema.Resource{
 2. Update documentation with migration guide to sevalla_database
 3. Remove resource after 60-90 day migration window
 
-#### 2. kinsta_wordpress_site ⚠️ NEEDS REFINEMENT
-**Status:** Implemented, functional, incomplete  
+#### 2. kinsta_wordpress_site ✅ COMPLETE
+**Status:** Implemented, tested, documented  
 **Files:**
 - `internal/provider/wordpress_site_resource.go`
-- `internal/provider/wordpress_site_resource_test.go`
+- `internal/provider/wordpress_site_resource_test.go` (acceptance)
 - `internal/provider/wordpress_site_resource_unit_test.go`
+- `specs/20-kinsta-wordpress-site-resource.md` (spec)
 
 **Current Implementation:**
 - ✅ POST /sites (async with operation_id)
 - ✅ GET /sites/{id}
 - ✅ DELETE /sites/{id} (async)
-- ✅ Basic schema fields
-- ✅ Unit tests
-- ✅ Acceptance tests
+- ✅ Full schema with all fields
+- ✅ Unit tests with mock client
+- ✅ Acceptance tests (basic, custom language, migrate mode)
+- ✅ Operations polling integration
+- ✅ Lookup-after-poll implementation
+- ✅ Documentation with examples
 
-**Missing Features:**
-- Missing schema fields: `is_multisite`, `is_subdomain_multisite`, `woocommerce`, `wordpressseo`
-- Missing computed output: `site_id`
-- Limited install_mode support (needs "plain" and "clone")
-- Import strategy needs documentation
-- Operations polling integration may need review per `specs/02-operations-polling-contract.md`
+**Priority:** ✅ P0 Complete
 
-**Priority:** P0 (Core WordPress functionality)
-
-#### 3. kinsta_wordpress_environment ⚠️ NEEDS DOCUMENTATION
-**Status:** Implemented and working  
+#### 3. kinsta_wordpress_environment ✅ COMPLETE
+**Status:** Implemented, tested, documented  
 **Files:**
 - `internal/provider/wordpress_environment_resource.go`
+- `internal/provider/wordpress_environment_resource_test.go` (acceptance)
 - `internal/provider/wordpress_environment_resource_unit_test.go`
 
 **Current Implementation:**
@@ -104,60 +108,16 @@ ResourcesMap: map[string]*schema.Resource{
 - ✅ Write-only fields with DiffSuppressFunc
 - ✅ Import support (site_id:env_id format)
 - ✅ Unit tests
+- ✅ Acceptance tests (basic, premium, custom settings)
+- ✅ Documentation
 
-**Missing:**
-- Comprehensive documentation of patterns
-- Acceptance tests
-- Example usage
-- Import documentation
-
-**Priority:** P0 (Core WordPress functionality)
+**Priority:** ✅ P0 Complete
 
 ---
 
 ## Remaining Work Breakdown
 
-### Phase 1: Cleanup & Documentation (Week 1-2)
-**Goal:** Stabilize existing resources and remove deprecated code
-
-#### 1.1 Deprecate kinsta_database
-- [ ] Add deprecation warning to resource
-- [ ] Update docs/resources/database.md with migration guide
-- [ ] Point users to sevalla_database
-- [ ] Add removal timeline (e.g., v2.0.0)
-
-**Estimated Effort:** 2-4 hours
-
-#### 1.2 Refine kinsta_wordpress_site
-- [ ] Create `specs/20-kinsta-wordpress-site-resource.md`
-- [ ] Add missing schema fields:
-  - [ ] `is_multisite` (bool)
-  - [ ] `is_subdomain_multisite` (bool)
-  - [ ] `woocommerce` (bool)
-  - [ ] `wordpressseo` (bool)
-- [ ] Add computed `site_id` output
-- [ ] Expand install_mode support ("plain", "clone")
-- [ ] Add missing field to client structs
-- [ ] Update unit tests
-- [ ] Update acceptance tests
-- [ ] Review operations polling implementation against `specs/02-operations-polling-contract.md`
-- [ ] Update documentation and examples
-
-**Estimated Effort:** 1-2 days
-
-#### 1.3 Document kinsta_wordpress_environment
-- [ ] Create `specs/21-kinsta-wordpress-environment-resource.md`
-- [ ] Document environment ID discovery pattern
-- [ ] Document eventual consistency handling
-- [ ] Document write-only fields pattern
-- [ ] Document import format
-- [ ] Create acceptance tests
-- [ ] Create comprehensive docs/resources/wordpress_environment.md
-- [ ] Create examples/wordpress_environment/
-
-**Estimated Effort:** 1 day
-
-### Phase 2: WordPress Domain Management (Week 3-4)
+### Phase 5: WordPress Domain Management (Week 1-2)
 **Goal:** Implement domain resources for WordPress sites
 
 #### 2.1 Implement kinsta_wordpress_domain
@@ -179,7 +139,7 @@ ResourcesMap: map[string]*schema.Resource{
 
 **Estimated Effort:** 2-3 days
 
-### Phase 3: WordPress Operational Resources (Week 5-6)
+### Phase 6: WordPress Operational Resources (Week 3-4)
 **Goal:** Implement backup and SFTP management
 
 #### 3.1 Implement kinsta_wordpress_backup
@@ -217,7 +177,7 @@ ResourcesMap: map[string]*schema.Resource{
 
 **Estimated Effort:** 1-2 days
 
-### Phase 4: Data Sources (Week 7-8)
+### Phase 7: Data Sources (Week 5-6)
 **Goal:** Implement read-only data sources for discovery
 
 #### 4.1 Implement Core Data Sources
@@ -234,7 +194,7 @@ ResourcesMap: map[string]*schema.Resource{
 
 **Estimated Effort:** 2-3 days
 
-### Phase 5: WordPress Tools (Week 9-10)
+### Phase 8: WordPress Tools (Week 7-8)
 **Goal:** Implement operational trigger resources
 
 #### 5.1 Implement Tool Resources
@@ -256,7 +216,7 @@ ResourcesMap: map[string]*schema.Resource{
 
 **Estimated Effort:** 2-3 days
 
-### Phase 6: Testing & Quality (Ongoing)
+### Phase 9: Testing & Quality (Ongoing)
 **Goal:** Establish comprehensive testing patterns
 
 #### 6.1 Testing Standards
@@ -286,22 +246,20 @@ ResourcesMap: map[string]*schema.Resource{
 
 ## Specification Files to Create
 
-### Priority 0 (Already Exists)
+### Priority 0 (Complete)
 - [x] `specs/00-adr-provider-split.md` - Provider split decision
 - [x] `specs/02-operations-polling-contract.md` - Async operations spec
+- [x] `specs/20-kinsta-wordpress-site-resource.md` - Site resource spec
+- [x] `specs/03-phase-4-kinsta-complete.md` - Phase 4 completion report
 
-### Priority 1 (Immediate - Week 1-2)
-- [ ] `specs/20-kinsta-wordpress-site-resource.md` - Site resource refinement
-- [ ] `specs/21-kinsta-wordpress-environment-resource.md` - Environment documentation
-
-### Priority 2 (Near-term - Week 3-4)
+### Priority 2 (Near-term - Week 1-2)
 - [ ] `specs/22-kinsta-wordpress-domain-resource.md` - Domain management
 
-### Priority 3 (Medium-term - Week 5-6)
+### Priority 3 (Medium-term - Week 3-4)
 - [ ] `specs/23-kinsta-wordpress-backup-resource.md` - Backup management
 - [ ] `specs/24-kinsta-wordpress-sftp-resource.md` - SFTP management
 
-### Priority 4 (Longer-term - Week 7+)
+### Priority 4 (Longer-term - Week 5+)
 - [ ] `specs/25-kinsta-wordpress-tools.md` - Operational tools
 - [ ] `specs/26-kinsta-data-sources.md` - Data sources
 - [ ] `specs/30-testing-standards.md` - Testing patterns
@@ -336,90 +294,76 @@ ResourcesMap: map[string]*schema.Resource{
 ## Timeline Estimate
 
 ### Optimistic (Single developer, full-time)
-- **Phase 1:** 1 week (cleanup & docs)
-- **Phase 2:** 1 week (domains)
-- **Phase 3:** 1.5 weeks (backups + SFTP)
-- **Phase 4:** 1 week (data sources)
-- **Phase 5:** 1 week (tools)
-- **Phase 6:** Ongoing (testing/quality)
+- **Phases 0-4 (Complete):** 2 weeks ✅
+- **Phase 5:** 1 week (domains)
+- **Phase 6:** 1.5 weeks (backups + SFTP)
+- **Phase 7:** 1 week (data sources)
+- **Phase 8:** 1 week (tools)
+- **Phase 9:** Ongoing (testing/quality)
 
-**Total:** 5.5 weeks
+**Total Remaining:** 4.5 weeks
 
 ### Realistic (Part-time or with interruptions)
-- **Phase 1:** 2 weeks
-- **Phase 2:** 2 weeks
-- **Phase 3:** 2 weeks
-- **Phase 4:** 1.5 weeks
-- **Phase 5:** 1.5 weeks
-- **Phase 6:** Ongoing
+- **Phases 0-4 (Complete):** 3 weeks ✅
+- **Phase 5:** 2 weeks
+- **Phase 6:** 2 weeks
+- **Phase 7:** 1.5 weeks
+- **Phase 8:** 1.5 weeks
+- **Phase 9:** Ongoing
 
-**Total:** 9 weeks
+**Total Remaining:** 7 weeks
 
 ---
 
 ## Next Steps (Immediate)
 
-### Step 1: Deprecate kinsta_database (2-4 hours)
-```bash
-# 1. Add deprecation warning to resource
-# Edit: internal/provider/database_resource.go
+### Phase 5: WordPress Domain Management
 
-# 2. Update documentation
-# Edit: docs/resources/database.md
-# Add migration guide to sevalla_database
-
-# 3. Update README with deprecation notice
-
-# 4. Test deprecation warning displays correctly
-go test ./internal/provider -run TestDatabaseResource
-```
-
-### Step 2: Refine kinsta_wordpress_site (1-2 days)
+#### Step 1: Create domain resource spec (4 hours)
 ```bash
 # 1. Create spec file
-# Create: specs/20-kinsta-wordpress-site-resource.md
+# Create: specs/22-kinsta-wordpress-domain-resource.md
 
-# 2. Add missing schema fields
-# Edit: internal/provider/wordpress_site_resource.go
-
-# 3. Add client struct fields
-# Edit: internal/client/wordpress.go
-
-# 4. Update tests
-# Edit: internal/provider/wordpress_site_resource_unit_test.go
-# Edit: internal/provider/wordpress_site_resource_test.go
-
-# 5. Update documentation
-# Edit: docs/resources/wordpress_site.md
-# Edit: examples/wordpress_site/
+# 2. Document API endpoints
+# - POST /sites/environments/{env_id}/domains
+# - DELETE /sites/environments/{env_id}/domains
+# - GET /sites/{site_id} (read via environments[].domains[])
+# - PUT /sites/environments/{env_id}/change-primary-domain
 ```
 
-### Step 3: Document kinsta_wordpress_environment (1 day)
+#### Step 2: Implement domain resource (1-2 days)
 ```bash
-# 1. Create spec file
-# Create: specs/21-kinsta-wordpress-environment-resource.md
+# 1. Add client methods
+# Edit: internal/client/client.go
+# Add: GetDomains, AddDomain, RemoveDomain, SetPrimaryDomain
 
-# 2. Create acceptance tests
-# Create: internal/provider/wordpress_environment_resource_test.go
+# 2. Implement resource
+# Create: internal/provider/wordpress_domain_resource.go
+# Create: internal/provider/wordpress_domain_resource_unit_test.go
 
-# 3. Create documentation
-# Create: docs/resources/wordpress_environment.md
-# Create: examples/wordpress_environment/
+# 3. Add to provider
+# Edit: internal/provider/provider.go
 
-# 4. Test everything
-TF_ACC=1 go test ./internal/provider -run TestAccWordPressEnvironment -v
+# 4. Create acceptance tests
+# Create: internal/provider/wordpress_domain_resource_test.go
+
+# 5. Create documentation
+# Create: docs/resources/wordpress_domain.md
+# Create: examples/wordpress_domain/
 ```
 
 ---
 
 ## Success Criteria
 
-### Phase 1 Complete When:
+### Phases 0-4 Complete ✅
+- [x] Architecture decisions locked (ADR, operations polling contract)
 - [x] kinsta_database has deprecation warning
-- [x] kinsta_wordpress_site has all schema fields from API
-- [x] kinsta_wordpress_environment has comprehensive docs
+- [x] kinsta_wordpress_site fully implemented with tests
+- [x] kinsta_wordpress_environment fully implemented with tests
 - [x] All existing tests pass
 - [x] Documentation updated
+- [x] Acceptance tests for core resources
 
 ### Provider Complete When:
 - [ ] All WordPress endpoints covered (sites, environments, domains, backups, SFTP)
@@ -438,6 +382,8 @@ TF_ACC=1 go test ./internal/provider -run TestAccWordPressEnvironment -v
 ### Key Documents
 - `specs/00-adr-provider-split.md` - Provider split architecture
 - `specs/02-operations-polling-contract.md` - Async operations pattern
+- `specs/20-kinsta-wordpress-site-resource.md` - Site resource spec
+- `specs/03-phase-4-kinsta-complete.md` - Phase 4 completion report
 - `ANALYSIS_SUMMARY.md` - Implementation analysis
 - `SEVALLA_SPEC_FINDINGS.md` - Sevalla API analysis
 - `SPECS_ROADMAP.md` - Detailed spec file roadmap
@@ -460,5 +406,6 @@ Total: 56 endpoints covering:
 
 ---
 
-**Last Updated:** 2026-01-02  
-**Next Review:** After Phase 1 completion
+**Last Updated:** 2026-01-03  
+**Next Review:** After Phase 5 completion  
+**Current Phase:** Phase 5 - WordPress Domain Management
