@@ -17,6 +17,8 @@ Your job
 
 Phase definitions (choose the earliest incomplete phase)
 
+## Kinsta Provider Phase Track
+
 PHASE 0 — Doc hygiene + architecture lock (kinsta repo)
 Required completion signals:
 - Canonical docs exist and are committed:
@@ -29,7 +31,42 @@ Required completion signals:
   - PROVIDER_SPLIT_ANALYSIS.md
 - All claims about deprecated endpoints and missing POST /applications cite spec pointers.
 
-PHASE 1 — Sevalla repo bootstrap (new repo)
+PHASE 1 (Kinsta) — Cleanup & Documentation
+Completion marker: specs/03-phase-1-kinsta-complete.md
+Required completion signals:
+- kinsta_database deprecated (no users, deprecate-only strategy)
+- kinsta_wordpress_site refined with missing schema fields (is_multisite, woocommerce, etc.)
+- kinsta_wordpress_environment fully documented:
+  - specs/21-kinsta-wordpress-environment-resource.md (technical spec)
+  - docs/resources/wordpress_environment.md (user docs)
+  - examples/wordpress_environment/main.tf (examples)
+- Unit tests updated for all changes
+- Build passes (go vet, go build)
+
+PHASE 2 (Kinsta) — Resource Implementation
+**NOT APPLICABLE** - Core resources already implemented
+
+PHASE 3 (Kinsta) — Resource Implementation (Part 2)
+**NOT APPLICABLE** - Core resources already implemented
+
+PHASE 4 (Kinsta) — Acceptance Testing
+Completion marker: specs/03-phase-4-kinsta-complete.md
+Required completion signals:
+- Acceptance tests created for kinsta_wordpress_site:
+  - TestAcc_ResourceWordPressSite_Basic
+  - TestAcc_ResourceWordPressSite_CustomLanguage
+  - TestAcc_ResourceWordPressSite_MigrateMode
+- Acceptance tests created for kinsta_wordpress_environment:
+  - TestAcc_ResourceWordPressEnvironment_Basic
+  - TestAcc_ResourceWordPressEnvironment_Premium
+  - TestAcc_ResourceWordPressEnvironment_CustomSettings
+- Provider test factories configured
+- Pre-check function implemented
+- All tests pass with TF_ACC=1
+
+## Sevalla Provider Phase Track
+
+PHASE 1 (Sevalla) — Sevalla repo bootstrap (new repo)
 Required completion signals:
 - Go module name changed appropriately (go.mod)
 - Provider scaffold compiles (go test ./... passes)
@@ -38,7 +75,7 @@ Required completion signals:
   - applications resource blocked (no POST /applications)
 - Only foundations copied (no WordPress resources).
 
-PHASE 2 — sevalla_database resource (first shippable feature)
+PHASE 2 (Sevalla) — sevalla_database resource (first shippable feature)
 Required completion signals:
 - specs/10-sevalla-database-resource.md exists (complete, testable contract)
 - sevalla_database resource implemented with SDK v2
@@ -46,7 +83,7 @@ Required completion signals:
 - unit tests + acceptance tests exist and pass (with TF_ACC=1 for acc)
 - docs/resources + examples exist
 
-PHASE 3 — Sevalla data sources
+PHASE 3 (Sevalla) — Sevalla data sources
 Required completion signals:
 - data sources implemented + docs + unit tests:
   - sevalla_applications (read-only)
@@ -54,7 +91,7 @@ Required completion signals:
   - sevalla_static_sites
   - sevalla_pipelines
 
-PHASE 4 — Deployment/action resources (only where POST exists)
+PHASE 4 (Sevalla) — Deployment/action resources (only where POST exists)
 Required completion signals:
 - action resources implemented + docs + tests:
   - sevalla_application_deployment
@@ -78,19 +115,38 @@ Repository inspection checklist (do this first, silently)
 
 Execution rules per phase
 
+## Phase 0 (Both Providers)
 If you choose PHASE 0:
 - Apply corrected doc patches only. Add the two canonical spec docs if missing.
-- Ensure kinsta_database strategy text reflects: “deprecate-only; no users; remove later.”
+- Ensure kinsta_database strategy text reflects: "deprecate-only; no users; remove later."
 - Do not change any Go files.
 
-If you choose PHASE 1:
+## Kinsta Provider Track
+
+If you choose PHASE 1 (Kinsta):
+- Deprecate kinsta_database (deprecation messages only, no bug fixes)
+- Refine kinsta_wordpress_site with missing schema fields
+- Document kinsta_wordpress_environment (spec + docs + examples)
+- Update unit tests for all changes
+- Verify build passes
+
+If you choose PHASE 4 (Kinsta):
+- Implement acceptance tests for kinsta_wordpress_site (3 test cases)
+- Implement acceptance tests for kinsta_wordpress_environment (3 test cases)
+- Configure provider test factories
+- Implement pre-check function
+- Verify all tests pass with TF_ACC=1
+
+## Sevalla Provider Track
+
+If you choose PHASE 1 (Sevalla):
 - Create/normalize sevalla scaffold by copying only foundations.
 - Delete WordPress resources/docs.
 - Set base URL default to https://api.sevalla.com/v2.
 - Add README scope + exclusions. Ensure build passes.
 - Do not implement sevalla resources yet.
 
-If you choose PHASE 2:
+If you choose PHASE 2 (Sevalla):
 - Implement sevalla_database and its spec, tests, docs.
 - Enforce:
   - ForceNew on immutables
@@ -99,11 +155,11 @@ If you choose PHASE 2:
   - 404 read semantics
   - no PollOperation
 
-If you choose PHASE 3:
+If you choose PHASE 3 (Sevalla):
 - Implement data sources (read-only), with pagination and docs.
 - Do not create application resource.
 
-If you choose PHASE 4:
+If you choose PHASE 4 (Sevalla):
 - Implement deployment/action resources only where POST exists.
 - Clearly document lifecycle semantics (delete behavior, state-only).
 
