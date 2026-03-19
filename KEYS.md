@@ -5,7 +5,7 @@ Use this to prepare for publishing to the public Terraform Registry. Private reg
 ## 1) Create an accepted signing key (Terraform Registry)
 
 Preferred (no manual key creation): use KMS-backed signing key via PKCS#11
-- Key already managed in platform/security project: `projects/blavity-shared-security/locations/global/keyRings/security-services/cryptoKeys/provider-signing` (RSA 4096, HSM).
+- Create or reference an RSA 4096 HSM key in your GCP project: `projects/YOUR_GCP_PROJECT/locations/global/keyRings/YOUR_KEY_RING/cryptoKeys/provider-signing`.
 - Present it to GPG with libkmsp11 + `gnupg-pkcs11-scd`; no `gpg --full-generate-key` needed.
 - Export public key (safe to publish):
   ```bash
@@ -14,8 +14,8 @@ Preferred (no manual key creation): use KMS-backed signing key via PKCS#11
 
 Fallback (only if KMS path unavailable)
 - Generate RSA (not ECC): `gpg --full-generate-key` → RSA+RSA, 4096, non-expiring.
-  - Real Name: `Blavity Terraform Registry Signing`
-  - Email: `engineering@blavity.com`
+  - Real Name: `Your Org Terraform Registry Signing`
+  - Email: `engineering@example.com`
   - Comment: optional (leave blank or `registry signing`)
 - Export public key: `gpg --armor --export <KEY_ID> > public.asc`
 - Export private key: `gpg --armor --export-secret-keys <KEY_ID> > private.asc`
@@ -26,11 +26,11 @@ Fallback (only if KMS path unavailable)
 
 ## 3) Wire CI secrets (GitHub repo)
 - `GPG_PUBLIC_KEY` = contents of `public.asc` (for Terraform Registry signing key)
-- If using fallback local key: `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`, `GPG_KEY_ID`
+- If using fallback local key: `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`
 - If using KMS-backed key (preferred):
-  - `KMS_KEY_RESOURCE` = e.g., `projects/blavity-shared-security/locations/global/keyRings/security-services/cryptoKeys/provider-signing/cryptoKeyVersions/1`
-  - `WIF_PROVIDER` = workload identity provider resource for repo (`projects/<platform-number>/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider`)
-  - `WIF_SERVICE_ACCOUNT` = `provider-signing@blavity-shared-platform.iam.gserviceaccount.com`
+  - `KMS_KEY_RESOURCE` = e.g., `projects/YOUR_GCP_PROJECT/locations/global/keyRings/YOUR_KEY_RING/cryptoKeys/provider-signing/cryptoKeyVersions/1`
+  - `WIF_PROVIDER` = workload identity provider resource for repo (`projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/YOUR_POOL/providers/YOUR_PROVIDER`)
+  - `WIF_SERVICE_ACCOUNT` = `provider-signing@YOUR_GCP_PROJECT.iam.gserviceaccount.com`
 
 ## 4) Public Terraform Registry publish workflow (prep)
 - Ensure repo name matches `terraform-provider-kinsta` and module path `github.com/blavity/terraform-provider-kinsta` (already done).
@@ -42,7 +42,7 @@ Fallback (only if KMS path unavailable)
 - Subsequent publishes: push a tag; GoReleaser + signature is enough.
 
 ## 4a) CI signing with KMS (outline)
-- Auth: GitHub Actions uses Workload Identity Federation to impersonate `provider-signing@blavity-shared-platform.iam.gserviceaccount.com`.
+- Auth: GitHub Actions uses Workload Identity Federation to impersonate `provider-signing@YOUR_GCP_PROJECT.iam.gserviceaccount.com`.
 - Configure gpg to use KMS:
   ```bash
   apt-get update && apt-get install -y gnupg gnupg-pkcs11-scd wget ca-certificates tar
