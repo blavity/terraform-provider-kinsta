@@ -19,6 +19,10 @@ func resourceWordPressEnvironment() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceWordPressEnvironmentImport,
 		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(15 * time.Minute),
+			Delete: schema.DefaultTimeout(15 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"site_id": {
 				Type:        schema.TypeString,

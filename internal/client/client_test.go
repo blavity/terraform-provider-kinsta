@@ -119,7 +119,8 @@ func TestPollOperation_Failure(t *testing.T) {
 	siteID, err := client.PollOperation(ctx, "test-op-789")
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "operation failed: database error")
+	assert.Contains(t, err.Error(), "operation test-op-789 failed")
+	assert.Contains(t, err.Error(), "database error")
 	assert.Empty(t, siteID)
 }
 
@@ -232,10 +233,10 @@ func TestPollOperation_404RetryExhausted(t *testing.T) {
 	siteID, err := client.PollOperation(ctx, "test-op-404")
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "API error")
+	assert.Contains(t, err.Error(), "operation test-op-404")
 	assert.Empty(t, siteID)
-	// Should retry for first 5 attempts (25 seconds)
-	assert.True(t, requestCount >= 5, "Should retry 404 for at least 5 attempts")
+	// Grace period is 6 attempts × 5s = 30s
+	assert.True(t, requestCount >= 6, "Should retry 404 for at least 6 grace attempts")
 }
 
 func TestPollOperation_ContextCancellation(t *testing.T) {
@@ -330,8 +331,56 @@ func TestPollOperation_HTTPError(t *testing.T) {
 	siteID, err := client.PollOperation(ctx, "test-op-error")
 
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "operation test-op-error")
 	assert.Contains(t, err.Error(), "API error")
 	assert.Empty(t, siteID)
+}
+
+func TestPollOperation_ExponentialBackoff(t *testing.T) {
+	var requestTimes []time.Time
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestTimes = append(requestTimes, time.Now())
+
+		status := 202
+		if len(requestTimes) >= 4 {
+			status = 200
+		}
+
+		response := OperationResponse{
+			Status:  status,
+			Message: "operation status",
+		}
+		if status == 200 {
+			response.Data = map[string]interface{}{"idSite": "test-site-backoff"}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	siteID, err := client.PollOperation(context.Background(), "test-op-backoff")
+
+	require.NoError(t, err)
+	assert.Equal(t, "test-site-backoff", siteID)
+	require.GreaterOrEqual(t, len(requestTimes), 4, "expected at least 4 requests")
+
+	// Verify intervals grow: first ~2s, second ~4s (50% tolerance for CI)
+	interval0 := requestTimes[1].Sub(requestTimes[0]).Seconds()
+	interval1 := requestTimes[2].Sub(requestTimes[1]).Seconds()
+
+	assert.InDelta(t, 2.0, interval0, 1.0, "first backoff should be ~2s")
+	assert.InDelta(t, 4.0, interval1, 2.0, "second backoff should be ~4s")
+	assert.Greater(t, interval1, interval0, "backoff should increase between attempts")
 }
 
 func TestClient_CompanyID(t *testing.T) {

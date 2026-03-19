@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 const (
@@ -373,60 +375,79 @@ func (c *Client) DeleteWordPressEnvironment(ctx context.Context, envID string) (
 	return &deleteResponse, nil
 }
 
+// pollBackoff returns the wait duration for a given in-progress attempt using
+// exponential backoff capped at 30s: 2s, 4s, 8s, 15s, 30s, 30s, ...
+func pollBackoff(attempt int) time.Duration {
+	intervals := []time.Duration{2, 4, 8, 15, 30}
+	if attempt < len(intervals) {
+		return intervals[attempt] * time.Second
+	}
+	return 30 * time.Second
+}
+
 func (c *Client) PollOperation(ctx context.Context, operationID string) (string, error) {
 	path := fmt.Sprintf("/operations/%s", operationID)
 
-	// Poll up to 5 minutes (60 attempts * 5 seconds)
-	for i := 0; i < 60; i++ {
+	// 404 grace period: operation may not be initialized for up to 30s after creation.
+	const grace404Max = 6
+	const grace404Wait = 5 * time.Second
+	grace404Count := 0
+
+	startTime := time.Now()
+
+	for attempt := 0; ; attempt++ {
+		tflog.Info(ctx, "polling operation", map[string]interface{}{
+			"operation_id": operationID,
+			"attempt":      attempt + 1,
+			"elapsed":      time.Since(startTime).String(),
+		})
+
 		var opResp OperationResponse
 		err := c.do(ctx, http.MethodGet, path, nil, &opResp)
 
-		// Handle 404 (operation not initialized yet - retry)
-		if err != nil && i < 5 {
-			// Retry for first 25 seconds (5 * 5s) as docs mention delay in operation initialization
-			select {
-			case <-ctx.Done():
-				return "", ctx.Err()
-			case <-time.After(5 * time.Second):
+		if err != nil {
+			// Retry any error (typically 404) within the grace period.
+			if grace404Count < grace404Max {
+				grace404Count++
+				select {
+				case <-ctx.Done():
+					return "", ctx.Err()
+				case <-time.After(grace404Wait):
+				}
 				continue
 			}
+			return "", fmt.Errorf("operation %s: %w", operationID, err)
 		}
 
-		if err != nil {
-			return "", err
-		}
-
-		// 200 = complete, 202 = in progress, 500 = failed
-		if opResp.Status == 200 {
-			// Extract resource ID from operation response data
-			// Kinsta API returns idSite for site creation, but may not return idEnv for environment creation
+		// Kinsta operations API uses HTTP 200 for all terminal states;
+		// the inner status field indicates the actual outcome.
+		switch opResp.Status {
+		case 200:
+			tflog.Info(ctx, "operation completed successfully", map[string]interface{}{
+				"operation_id": operationID,
+				"elapsed":      time.Since(startTime).String(),
+			})
+			// idSite is present for site creation; idEnv may be absent (use before/after lookup).
 			if siteID, ok := opResp.Data["idSite"].(string); ok {
 				return siteID, nil
 			}
 			if envID, ok := opResp.Data["idEnv"].(string); ok {
 				return envID, nil
 			}
-
-			// Some operations (like environment creation) complete successfully but don't return resource IDs
-			// Return empty string to indicate success without ID - caller will need to fetch the resource
 			return "", nil
-		}
 
-		if opResp.Status == 500 {
+		case 500:
 			dataJSON, _ := json.Marshal(opResp.Data)
-			return "", fmt.Errorf("operation failed: %s, data: %s", opResp.Message, string(dataJSON))
+			return "", fmt.Errorf("operation %s failed: %s, data: %s", operationID, opResp.Message, string(dataJSON))
 		}
 
-		// Still in progress (202), wait and retry
+		// 202 in progress — exponential backoff.
 		select {
 		case <-ctx.Done():
 			return "", ctx.Err()
-		case <-time.After(5 * time.Second):
-			continue
+		case <-time.After(pollBackoff(attempt)):
 		}
 	}
-
-	return "", fmt.Errorf("operation timed out after 5 minutes")
 }
 
 func getMapKeys(m map[string]interface{}) []string {

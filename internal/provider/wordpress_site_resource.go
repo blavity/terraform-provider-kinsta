@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"time"
+
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -15,6 +17,10 @@ func resourceWordPressSite() *schema.Resource {
 		DeleteContext: resourceWordPressSiteDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(15 * time.Minute),
+			Delete: schema.DefaultTimeout(15 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
 			"display_name": {
