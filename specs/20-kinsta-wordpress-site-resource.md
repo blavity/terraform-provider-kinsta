@@ -122,18 +122,18 @@ The API will reject invalid values. No client-side validation needed beyond Terr
 
 ### Unit Tests (`wordpress_site_resource_unit_test.go`)
 - [x] Schema validation (existing)
-- [ ] Create request struct marshaling with new fields
-- [ ] Read response unmarshaling (verify write-only fields not set)
-- [ ] Error handling for 404 in Read
+- [x] Create request struct marshaling with new fields
+- [x] Read response unmarshaling (verify write-only fields not set)
+- [x] Error handling for 404 in Read
 
 ### Acceptance Tests (`wordpress_site_resource_test.go`)
 - [x] Basic create/read/delete cycle (existing)
-- [ ] Create with `is_multisite = true`
-- [ ] Create with `woocommerce = true`
-- [ ] Create with `wordpressseo = true`
-- [ ] Create with `install_mode = "plain"`
-- [ ] Import existing site
-- [ ] Verify all fields ForceNew (change triggers replacement)
+- [x] Create with `is_multisite = true`
+- [x] Create with `woocommerce = true`
+- [x] Create with `wordpressseo = true`
+- [x] Create with `install_mode = "plain"`
+- [x] Import existing site
+- [x] Verify all fields ForceNew (change triggers replacement)
 
 **Test Helpers Needed:**
 - Random name generation (avoid conflicts)
@@ -166,18 +166,18 @@ The API will reject invalid values. No client-side validation needed beyond Terr
 ## Implementation Checklist
 
 - [x] Resource exists at `internal/provider/wordpress_site_resource.go`
-- [ ] Add 4 new schema fields with ForceNew=true
-- [ ] Update `internal/client/wordpress.go` structs with new fields
-- [ ] Update Create to pass new fields to API
-- [ ] Verify Read does NOT set new fields (write-only)
-- [ ] Ensure Update returns error (not supported)
-- [ ] Update unit tests
-- [ ] Add acceptance tests for new fields
-- [ ] Update documentation
-- [ ] Create examples
+- [x] Add 4 new schema fields with ForceNew=true
+- [x] Update client structs with new fields
+- [x] Update Create to pass new fields to API
+- [x] Verify Read does NOT set new fields (write-only)
+- [x] Ensure Update returns error (not supported)
+- [x] Update unit tests
+- [x] Add acceptance tests for new fields (is_multisite, woocommerce, wordpressseo, install_mode=plain, import, ForceNew)
+- [x] Update documentation
+- [x] Create examples (examples/wordpress_site/)
 
 ---
 
-**Status:** In Progress  
-**Last Updated:** 2026-01-02  
-**Next Review:** After implementation complete
+**Status:** Complete
+**Last Updated:** 2026-03-19
+**Next Review:** After Phase 5
