@@ -1,39 +1,37 @@
 terraform {
   required_providers {
     kinsta = {
-      source = "blavity.com/platform/kinsta"
-    }
-    vault = {
-      source  = "hashicorp/vault"
-      version = "~> 4.5"
+      source  = "blavity/kinsta"
+      version = "~> 0.1"
     }
   }
 }
 
-# Get Kinsta credentials from Vault
-data "vault_kv_secret_v2" "kinsta_api" {
-  mount = "platform"
-  name  = "kinsta/prod/api-credentials"
-}
-
 provider "kinsta" {
-  api_key    = data.vault_kv_secret_v2.kinsta_api.data["api_key"]
-  company_id = data.vault_kv_secret_v2.kinsta_api.data["company_id"]
+  # Authentication via environment variables (recommended):
+  # export KINSTA_API_KEY="your-api-key"
+  # export KINSTA_COMPANY_ID="your-company-id"
 }
 
-provider "vault" {
-  address = "https://vault.blavity.com"
+variable "admin_password" {
+  description = "WordPress admin password"
+  type        = string
+  sensitive   = true
 }
 
 resource "kinsta_wordpress_site" "staging" {
-  display_name   = "Blavityinc Staging"
+  display_name   = "My Staging Site"
   region         = "us-central1"
-  install_mode   = "new"
-  admin_email    = "platform@blavity.com"
-  admin_password = "temporary-password-change-me"
-  admin_user     = "blavityinc_admin"
-  site_title     = "Blavityinc Staging Site"
+  admin_email    = "admin@example.com"
+  admin_password = var.admin_password
+  admin_user     = "admin"
+  site_title     = "My Staging Site"
   wp_language    = "en_US"
+}
+
+resource "kinsta_wordpress_environment" "staging" {
+  site_id      = kinsta_wordpress_site.staging.site_id
+  display_name = "staging"
 }
 
 output "site_id" {
@@ -41,5 +39,5 @@ output "site_id" {
 }
 
 output "environment_id" {
-  value = kinsta_wordpress_site.staging.environment_id
+  value = kinsta_wordpress_environment.staging.id
 }
