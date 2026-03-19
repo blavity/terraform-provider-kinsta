@@ -25,6 +25,7 @@ func resourceWordPressSite() *schema.Resource {
 			"region": {
 				Type:     schema.TypeString,
 				Required: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"install_mode": {
@@ -36,23 +37,27 @@ func resourceWordPressSite() *schema.Resource {
 			"admin_email": {
 				Type:      schema.TypeString,
 				Required:  true,
+				Computed:  true,
 				Sensitive: true,
 				ForceNew:  true,
 			},
 			"admin_password": {
 				Type:      schema.TypeString,
 				Required:  true,
+				Computed:  true,
 				Sensitive: true,
 				ForceNew:  true,
 			},
 			"admin_user": {
 				Type:     schema.TypeString,
 				Required: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"site_title": {
 				Type:     schema.TypeString,
 				Required: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"wp_language": {

@@ -150,8 +150,9 @@ func TestPollOperation_NoSiteIDInResponse(t *testing.T) {
 	ctx := context.Background()
 	siteID, err := client.PollOperation(ctx, "test-op-no-site-id")
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no idSite or idEnv in response")
+	// When operation completes without idSite/idEnv (e.g. environment creation),
+	// PollOperation returns ("", nil) — the caller is responsible for resource discovery.
+	require.NoError(t, err)
 	assert.Empty(t, siteID)
 }
 
@@ -620,7 +621,7 @@ func TestClient_GetWordPressEnvironment(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodGet, r.Method)
-		assert.Equal(t, fmt.Sprintf("/sites/%s/environments/%s", siteID, envID), r.URL.Path)
+		assert.Equal(t, fmt.Sprintf("/sites/environments/%s", envID), r.URL.Path)
 		assert.Equal(t, "Bearer test-api-key", r.Header.Get("Authorization"))
 
 		response := GetWordPressEnvironmentResponse{
