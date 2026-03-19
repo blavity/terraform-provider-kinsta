@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/blavity/terraform-provider-kinsta/internal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 type mockWordPressSiteKinstaClient struct {
@@ -313,9 +314,9 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	t.Run("required fields are marked as required", func(t *testing.T) {
 		requiredFields := []string{"display_name", "region", "admin_email", "admin_password", "admin_user", "site_title"}
 		for _, field := range requiredFields {
-			schema, ok := resource.Schema[field]
+			fieldSchema, ok := resource.Schema[field]
 			assert.True(t, ok, "Field %s should exist in schema", field)
-			assert.True(t, schema.Required, "Field %s should be required", field)
+			assert.True(t, fieldSchema.Required, "Field %s should be required", field)
 		}
 	})
 
@@ -327,19 +328,19 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	t.Run("sensitive fields are marked as sensitive", func(t *testing.T) {
 		sensitiveFields := []string{"admin_email", "admin_password"}
 		for _, field := range sensitiveFields {
-			schema, ok := resource.Schema[field]
+			fieldSchema, ok := resource.Schema[field]
 			assert.True(t, ok, "Field %s should exist in schema", field)
-			assert.True(t, schema.Sensitive, "Field %s should be sensitive", field)
+			assert.True(t, fieldSchema.Sensitive, "Field %s should be sensitive", field)
 		}
 	})
 
 	t.Run("computed fields are marked as computed", func(t *testing.T) {
 		computedFields := []string{"site_id", "environment_id"}
 		for _, field := range computedFields {
-			schema, ok := resource.Schema[field]
+			fieldSchema, ok := resource.Schema[field]
 			assert.True(t, ok, "Field %s should exist in schema", field)
-			assert.True(t, schema.Computed, "Field %s should be computed", field)
-			assert.False(t, schema.Required, "Field %s should not be required", field)
+			assert.True(t, fieldSchema.Computed, "Field %s should be computed", field)
+			assert.False(t, fieldSchema.Required, "Field %s should not be required", field)
 		}
 	})
 

@@ -63,7 +63,7 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, v 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // response body close errors are not actionable
 
 	if resp.StatusCode == http.StatusNotFound {
 		return &NotFoundError{Path: path}
@@ -81,6 +81,7 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, v 
 
 	return nil
 }
+
 type CreateWordPressSiteRequest struct {
 	Company              string `json:"company"`
 	DisplayName          string `json:"display_name"`
@@ -304,7 +305,6 @@ func (c *Client) PollOperation(ctx context.Context, operationID string) (string,
 
 		var opResp OperationResponse
 		err := c.do(ctx, http.MethodGet, path, nil, &opResp)
-
 		if err != nil {
 			// Retry any error (typically 404) within the grace period.
 			if grace404Count < grace404Max {
@@ -348,12 +348,4 @@ func (c *Client) PollOperation(ctx context.Context, operationID string) (string,
 		case <-time.After(pollBackoff(attempt)):
 		}
 	}
-}
-
-func getMapKeys(m map[string]interface{}) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
 }

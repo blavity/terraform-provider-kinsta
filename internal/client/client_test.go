@@ -13,6 +13,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// encodeJSON writes v as JSON to w. Panics on error — only use in test handlers.
+func encodeJSON(w http.ResponseWriter, v interface{}) {
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		panic(fmt.Sprintf("test server: failed to encode JSON: %v", err))
+	}
+}
+
 func TestPollOperation_Success(t *testing.T) {
 	// Track number of requests
 	requestCount := 0
@@ -44,7 +51,7 @@ func TestPollOperation_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -77,7 +84,7 @@ func TestPollOperation_ImmediateSuccess(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -104,7 +111,7 @@ func TestPollOperation_Failure(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -137,7 +144,7 @@ func TestPollOperation_NoSiteIDInResponse(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -167,7 +174,7 @@ func TestPollOperation_404RetrySuccess(t *testing.T) {
 		if requestCount < 3 {
 			// First 2 requests return 404 (operation not initialized yet)
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error": "Operation not found"}`))
+			_, _ = w.Write([]byte(`{"error": "Operation not found"}`))
 			return
 		}
 
@@ -179,7 +186,7 @@ func TestPollOperation_404RetrySuccess(t *testing.T) {
 			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(response)
+			encodeJSON(w, response)
 		} else {
 			response := OperationResponse{
 				Status:  200,
@@ -190,7 +197,7 @@ func TestPollOperation_404RetrySuccess(t *testing.T) {
 			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(response)
+			encodeJSON(w, response)
 		}
 	}))
 	defer server.Close()
@@ -218,7 +225,7 @@ func TestPollOperation_404RetryExhausted(t *testing.T) {
 
 		// Always return 404
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error": "Operation not found"}`))
+		_, _ = w.Write([]byte(`{"error": "Operation not found"}`))
 	}))
 	defer server.Close()
 
@@ -252,7 +259,7 @@ func TestPollOperation_ContextCancellation(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -291,7 +298,7 @@ func TestPollOperation_ContextTimeout(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -316,7 +323,7 @@ func TestPollOperation_ContextTimeout(t *testing.T) {
 func TestPollOperation_HTTPError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "Internal server error"}`))
+		_, _ = w.Write([]byte(`{"error": "Internal server error"}`))
 	}))
 	defer server.Close()
 
@@ -357,7 +364,7 @@ func TestPollOperation_ExponentialBackoff(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -434,7 +441,7 @@ func TestClient_CreateWordPressSite(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -479,7 +486,7 @@ func TestClient_GetWordPressSite(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -515,7 +522,7 @@ func TestClient_DeleteWordPressSite(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -567,7 +574,7 @@ func TestClient_CreateWordPressEnvironment_Standard(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -612,7 +619,7 @@ func TestClient_CreateWordPressEnvironment_Premium(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -645,7 +652,7 @@ func TestClient_CreateWordPressEnvironment_Error(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"error": "Invalid request"}`))
+		_, _ = w.Write([]byte(`{"error": "Invalid request"}`))
 	}))
 	defer server.Close()
 
@@ -683,7 +690,7 @@ func TestClient_GetWordPressEnvironment(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -708,7 +715,7 @@ func TestClient_GetWordPressEnvironment_Error(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(`{"error": "Environment not found"}`))
+		_, _ = w.Write([]byte(`{"error": "Environment not found"}`))
 	}))
 	defer server.Close()
 
@@ -743,7 +750,7 @@ func TestClient_DeleteWordPressEnvironment(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 
@@ -767,7 +774,7 @@ func TestClient_DeleteWordPressEnvironment_Error(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(`{"error": "Internal server error"}`))
+		_, _ = w.Write([]byte(`{"error": "Internal server error"}`))
 	}))
 	defer server.Close()
 
@@ -803,7 +810,7 @@ func TestPollOperation_EnvironmentID(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		encodeJSON(w, response)
 	}))
 	defer server.Close()
 

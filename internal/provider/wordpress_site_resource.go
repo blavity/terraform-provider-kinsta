@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/blavity/terraform-provider-kinsta/internal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func resourceWordPressSite() *schema.Resource {
@@ -165,13 +166,19 @@ func resourceWordPressSiteRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	d.Set("site_id", resp.Site.ID)
-	d.Set("display_name", resp.Site.DisplayName)
+	if err := d.Set("site_id", resp.Site.ID); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("display_name", resp.Site.DisplayName); err != nil {
+		return diag.FromErr(err)
+	}
 
 	// Extract environment_id for the live environment (site creation auto-creates live)
 	for _, env := range resp.Site.Environments {
 		if env.Name == "live" {
-			d.Set("environment_id", env.ID)
+			if err := d.Set("environment_id", env.ID); err != nil {
+				return diag.FromErr(err)
+			}
 			break
 		}
 	}

@@ -10,7 +10,7 @@ var testAccProviderFactories map[string]func() (*schema.Provider, error)
 
 func init() {
 	testAccProviderFactories = map[string]func() (*schema.Provider, error){
-		"kinsta": func() (*schema.Provider, error) {
+		"kinsta": func() (*schema.Provider, error) { //nolint:unparam // error always nil; matches required factory signature
 			return Provider(), nil
 		},
 	}

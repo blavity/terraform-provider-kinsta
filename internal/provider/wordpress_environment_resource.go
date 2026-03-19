@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blavity/terraform-provider-kinsta/internal/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func resourceWordPressEnvironment() *schema.Resource {
@@ -196,12 +197,18 @@ func resourceWordPressEnvironmentCreate(ctx context.Context, d *schema.ResourceD
 	d.SetId(envID)
 
 	// Preserve write-only fields in state (can't be read back from API)
-	d.Set("site_title", req.SiteTitle)
-	d.Set("is_premium", req.IsPremium)
-	d.Set("admin_email", req.AdminEmail)
-	d.Set("admin_password", req.AdminPassword)
-	d.Set("admin_user", req.AdminUser)
-	d.Set("wp_language", wpLanguage)
+	for k, v := range map[string]interface{}{
+		"site_title":     req.SiteTitle,
+		"is_premium":     req.IsPremium,
+		"admin_email":    req.AdminEmail,
+		"admin_password": req.AdminPassword,
+		"admin_user":     req.AdminUser,
+		"wp_language":    wpLanguage,
+	} {
+		if err := d.Set(k, v); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	// Read the environment to populate computed attributes
 	return resourceWordPressEnvironmentRead(ctx, d, m)
@@ -235,8 +242,12 @@ func resourceWordPressEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 
-	d.Set("environment_id", foundEnv.ID)
-	d.Set("display_name", foundEnv.DisplayName)
+	if err := d.Set("environment_id", foundEnv.ID); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("display_name", foundEnv.DisplayName); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }
@@ -276,7 +287,9 @@ func resourceWordPressEnvironmentImport(ctx context.Context, d *schema.ResourceD
 	envID := parts[1]
 
 	// Set the site_id in state
-	d.Set("site_id", siteID)
+	if err := d.Set("site_id", siteID); err != nil {
+		return nil, err
+	}
 	// Set the environment_id as the resource ID
 	d.SetId(envID)
 
