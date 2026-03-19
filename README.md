@@ -110,4 +110,4 @@ Kinsta, MyKinsta, and WordPress are trademarks or registered trademarks of their
 
 ## License
 
-Internal use only — Blavity Inc.
+[Mozilla Public License 2.0](LICENSE) — Copyright (c) 2024–2026 Blavity, Inc.
