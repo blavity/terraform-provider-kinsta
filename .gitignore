@@ -62,3 +62,12 @@ coverage/
 
 # Terraform provider binary
 terraform-provider-*
+
+# Agent working directories (keep constitution)
+.claude/
+.codex/
+.opencode/
+.specify/**
+!.specify/
+!.specify/memory/
+!.specify/memory/constitution.md
