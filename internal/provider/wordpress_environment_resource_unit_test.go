@@ -324,6 +324,10 @@ func Test_resourceWordPressEnvironmentDelete(t *testing.T) {
 				Message:     "WordPress environment 'test-env-id' is being deleted",
 			}, nil
 		},
+		pollOperation: func(ctx context.Context, operationID string) (string, error) {
+			assert.Equal(t, "delete-env-op-123", operationID)
+			return "", nil
+		},
 	}
 
 	d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{

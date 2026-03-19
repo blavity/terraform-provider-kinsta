@@ -2,7 +2,7 @@
 
 Manage your Kinsta WordPress hosting infrastructure with Terraform.
 
-**Status:** Private registry-ready (v0.0.2)
+**Status:** Pre-release (v0.1)
 
 ## Supported Resources
 
@@ -21,8 +21,8 @@ This provider manages WordPress resources via the MyKinsta API (`api.kinsta.com/
 terraform {
   required_providers {
     kinsta = {
-      source  = "blavity.com/platform/kinsta"
-      version = "~> 0.0.2"
+      source  = "blavity/kinsta"
+      version = "~> 0.1"
     }
   }
 }
@@ -60,8 +60,6 @@ resource "kinsta_wordpress_site" "example" {
 resource "kinsta_wordpress_environment" "staging" {
   site_id      = kinsta_wordpress_site.example.site_id
   display_name = "staging"
-  install_mode = "clone"
-  source_env_id = kinsta_wordpress_site.example.environment_id
 }
 
 output "site_id" {
@@ -96,7 +94,7 @@ Dev override (no registry):
 ```hcl
 provider_installation {
   dev_overrides {
-    "blavity.com/platform/kinsta" = "/path/to/terraform-provider-kinsta"
+    "blavity/kinsta" = "/path/to/terraform-provider-kinsta"
   }
   direct {}
 }

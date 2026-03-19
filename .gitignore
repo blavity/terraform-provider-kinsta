@@ -63,6 +63,20 @@ coverage/
 # Terraform provider binary
 terraform-provider-*
 
+# Terraform working directories and state
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
 # Agent working directories (keep constitution)
 .claude/
 .codex/

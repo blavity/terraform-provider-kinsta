@@ -251,8 +251,12 @@ func resourceWordPressEnvironmentDelete(ctx context.Context, d *schema.ResourceD
 	c := m.(client.KinstaClient)
 	id := d.Id()
 
-	_, err := c.DeleteWordPressEnvironment(ctx, id)
+	resp, err := c.DeleteWordPressEnvironment(ctx, id)
 	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if _, err := c.PollOperation(ctx, resp.OperationID); err != nil {
 		return diag.FromErr(err)
 	}
 

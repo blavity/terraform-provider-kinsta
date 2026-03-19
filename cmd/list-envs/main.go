@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 3 {
+	if len(os.Args) < 4 {
 		log.Fatal("Usage: list-envs <api_key> <company_id> <site_id>")
 	}
 

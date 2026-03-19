@@ -184,8 +184,12 @@ func resourceWordPressSiteDelete(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(client.KinstaClient)
 	id := d.Id()
 
-	_, err := c.DeleteWordPressSite(ctx, id)
+	resp, err := c.DeleteWordPressSite(ctx, id)
 	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if _, err := c.PollOperation(ctx, resp.OperationID); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -248,8 +248,13 @@ func Test_resourceWordPressSiteDelete(t *testing.T) {
 		mockClient := &mockWordPressSiteKinstaClient{
 			deleteWordPressSite: func(ctx context.Context, id string) (*client.DeleteWordPressSiteResponse, error) {
 				return &client.DeleteWordPressSiteResponse{
-					Message: "WordPress site 'test-site-id' is being deleted",
+					OperationID: "delete-site-op-123",
+					Message:     "WordPress site 'test-site-id' is being deleted",
 				}, nil
+			},
+			pollOperation: func(ctx context.Context, operationID string) (string, error) {
+				assert.Equal(t, "delete-site-op-123", operationID)
+				return "", nil
 			},
 		}
 
