@@ -123,14 +123,14 @@ grep -r "sevalla" docs/
 
 ## Success Criteria
 
-- [ ] All database resource files deleted
-- [ ] Database removed from provider.go registration
-- [ ] Split analysis docs archived to specs/archive/
-- [ ] README.md updated to reflect WordPress-only scope
-- [ ] No references to database resource in active code
-- [ ] No references to sevalla in user-facing docs
-- [ ] All validation commands pass
-- [ ] specs/03-phase-5-kinsta-complete.md created
+- [x] All database resource files deleted
+- [x] Database removed from provider.go registration
+- [x] Split analysis docs archived to specs/archive/
+- [x] README.md updated to reflect WordPress-only scope
+- [x] No references to database resource in active code
+- [x] No references to sevalla in user-facing docs
+- [x] All validation commands pass
+- [x] specs/03-phase-5-kinsta-complete.md created
 
 ---
 

@@ -24,7 +24,6 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"kinsta_database":              resourceDatabase(),
 			"kinsta_wordpress_site":        resourceWordPressSite(),
 			"kinsta_wordpress_environment": resourceWordPressEnvironment(),
 		},

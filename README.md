@@ -1,12 +1,21 @@
-# Terraform Provider for Kinsta
+# Terraform Provider for Kinsta (MyKinsta API)
 
-Terraform/OpenTofu provider for managing Kinsta WordPress hosting sites.
+Manage your Kinsta WordPress hosting infrastructure with Terraform.
 
-**Status**: Private registry-ready (v0.0.2)
+**Status:** Private registry-ready (v0.0.2)
 
-## Using the provider (private registry)
+## Supported Resources
 
-Once the GitHub Pages registry is published, consume the provider without dev overrides:
+- `kinsta_wordpress_site` — WordPress site management (create, read, delete)
+- `kinsta_wordpress_environment` — Environment management (staging, production, clone)
+
+## Scope
+
+This provider manages WordPress resources via the MyKinsta API (`api.kinsta.com/v2`).
+
+**Note:** PaaS resources (applications, databases, static sites) are managed by the separate Sevalla provider.
+
+## Installation
 
 ```hcl
 terraform {
@@ -19,17 +28,70 @@ terraform {
 }
 
 provider "kinsta" {
-  api_key    = var.kinsta_api_key      # or env KINSTA_API_KEY
-  company_id = var.kinsta_company_id   # or env KINSTA_COMPANY_ID
+  api_key    = var.kinsta_api_key    # or env KINSTA_API_KEY
+  company_id = var.kinsta_company_id # or env KINSTA_COMPANY_ID
 }
 ```
 
-## Local development
+## Authentication
 
-- Go 1.25+
-- Kinsta API key (see [Kinsta API docs](https://kinsta.com/docs/kinsta-api/))
+Set credentials via environment variables (recommended):
 
-Dev override (no registry) remains available:
+```bash
+export KINSTA_API_KEY="your-api-key"
+export KINSTA_COMPANY_ID="your-company-id"
+```
+
+Or provide them directly in the provider block (not recommended for production).
+
+## Example Usage
+
+```hcl
+resource "kinsta_wordpress_site" "example" {
+  display_name   = "My WordPress Site"
+  region         = "us-central1"
+  admin_email    = "admin@example.com"
+  admin_password = var.admin_password
+  admin_user     = "admin"
+  site_title     = "My WordPress Site"
+  wp_language    = "en_US"
+}
+
+resource "kinsta_wordpress_environment" "staging" {
+  site_id      = kinsta_wordpress_site.example.site_id
+  display_name = "staging"
+  install_mode = "clone"
+  source_env_id = kinsta_wordpress_site.example.environment_id
+}
+
+output "site_id" {
+  value = kinsta_wordpress_site.example.site_id
+}
+```
+
+## Documentation
+
+See `docs/resources/` for complete resource documentation:
+
+- [kinsta_wordpress_site](docs/resources/wordpress_site.md)
+- [kinsta_wordpress_environment](docs/resources/wordpress_environment.md)
+
+## Development
+
+Requirements: Go 1.25+
+
+```bash
+# Build
+go build ./...
+
+# Unit tests
+go test ./internal/...
+
+# Acceptance tests (requires live credentials)
+TF_ACC=1 go test ./internal/provider/ -v
+```
+
+Dev override (no registry):
 
 ```hcl
 provider_installation {
@@ -40,53 +102,8 @@ provider_installation {
 }
 ```
 
-Export for local plans:
-
-```bash
-export TF_CLI_CONFIG_FILE=~/.terraform.d/provider_override.tfrc
-go build ./...
-tofu plan
-```
-
-## API Specification
-
-The Kinsta API spec (`swagger.json`) is **not included** in this repository.  
-Download the latest spec from [Kinsta API Documentation](https://api-docs.kinsta.com/) for reference.
-
-## Preparing for the public Terraform Registry
-
-- Follow `KEYS.md` to register a Terraform Registry–approved GPG key and wire CI secrets.
-- When ready to switch from GitHub Pages to the public registry, disable the Pages publish step in `.github/workflows/release.yml` and update consumers to `source = "registry.terraform.io/blavity/kinsta"`.
-- OpenTofu users can consume either the private registry (`blavity.com/platform/kinsta`) or the public Terraform Registry once published—the protocol is identical.
-
-## v0.0.1 Features
-
-- ✅ Create WordPress sites
-- ✅ Read site details (site_id, environment_id)
-- ✅ Delete sites
-- ✅ Async operation polling
-
-**Out of scope**: SFTP credentials retrieval (use Kinsta API directly), site updates
-
-## Example Usage
-
-```hcl
-resource "kinsta_wordpress_site" "example" {
-  display_name   = "My WordPress Site"
-  region         = "us-central1"
-  install_mode   = "new"
-  admin_email    = "admin@example.com"
-  admin_password = "secure-password"
-  admin_user     = "admin"
-  site_title     = "My Site"
-  wp_language    = "en_US"
-}
-
-output "site_id" {
-  value = kinsta_wordpress_site.example.site_id
-}
-```
+See `KEYS.md` for Terraform Registry publication instructions.
 
 ## License
 
-Internal use only - Blavity Inc.
+Internal use only — Blavity Inc.

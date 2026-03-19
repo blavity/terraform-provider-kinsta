@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -12,4 +14,8 @@ func init() {
 			return Provider(), nil
 		},
 	}
+}
+
+func testAccPreCheck(t *testing.T) {
+	// Pre-check for acceptance tests. Add credential validation here if needed.
 }

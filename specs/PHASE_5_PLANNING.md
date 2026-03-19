@@ -123,16 +123,16 @@ Create `specs/03-phase-5-kinsta-complete.md` with:
 
 ## Validation Checklist
 
-- [ ] All database files removed
-- [ ] Database removed from provider.go
-- [ ] 11 analysis docs moved to specs/archive/
-- [ ] README.md updated
-- [ ] go vet ./... passes
-- [ ] go build passes
-- [ ] go test ./internal/provider passes
-- [ ] No "kinsta_database" in active code
-- [ ] No "sevalla" in user-facing docs
-- [ ] specs/03-phase-5-kinsta-complete.md created
+- [x] All database files removed
+- [x] Database removed from provider.go
+- [x] 11 analysis docs moved to specs/archive/
+- [x] README.md updated
+- [x] go vet ./... passes
+- [x] go build passes
+- [x] go test ./internal/provider passes
+- [x] No "kinsta_database" in active code
+- [x] No "sevalla" in user-facing docs
+- [x] specs/03-phase-5-kinsta-complete.md created
 
 ---
 

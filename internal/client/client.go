@@ -61,65 +61,6 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, v 
 
 	return nil
 }
-
-type CreateDatabaseRequest struct {
-	CompanyID    string `json:"company_id"`
-	Location     string `json:"location"`
-	ResourceType string `json:"resource_type"`
-	DisplayName  string `json:"display_name"`
-	DBName       string `json:"db_name"`
-	DBPassword   string `json:"db_password"`
-	DBUser       string `json:"db_user,omitempty"`
-	Type         string `json:"type"`
-	Version      string `json:"version"`
-}
-
-type CreateDatabaseResponse struct {
-	Database struct {
-		ID string `json:"id"`
-	} `json:"database"`
-}
-
-type Database struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	DisplayName string `json:"display_name"`
-	Status      string `json:"status"`
-	CreatedAt   int64  `json:"created_at"`
-	MemoryLimit int    `json:"memory_limit"`
-	CPULimit    int    `json:"cpu_limit"`
-	StorageSize int    `json:"storage_size"`
-	Type        string `json:"type"`
-	Version     string `json:"version"`
-	Cluster     struct {
-		ID          string `json:"id"`
-		Location    string `json:"location"`
-		DisplayName string `json:"display_name"`
-	} `json:"cluster"`
-	ResourceType string `json:"resource_type_name"`
-}
-
-type GetDatabaseResponse struct {
-	Database Database `json:"database"`
-}
-
-type UpdateDatabaseRequest struct {
-	ResourceType string `json:"resource_type,omitempty"`
-	DisplayName  string `json:"display_name,omitempty"`
-}
-
-type UpdateDatabaseResponse struct {
-	Database struct {
-		ID          string `json:"id"`
-		DisplayName string `json:"display_name"`
-		Status      string `json:"status"`
-	} `json:"database"`
-}
-
-type DeleteDatabaseResponse struct {
-	Message string `json:"message"`
-}
-
 type CreateWordPressSiteRequest struct {
 	Company              string `json:"company"`
 	DisplayName          string `json:"display_name"`
@@ -206,10 +147,6 @@ type DeleteWordPressEnvironmentResponse struct {
 
 type KinstaClient interface {
 	CompanyID() string
-	CreateDatabase(ctx context.Context, req *CreateDatabaseRequest) (*CreateDatabaseResponse, error)
-	GetDatabase(ctx context.Context, id string) (*GetDatabaseResponse, error)
-	UpdateDatabase(ctx context.Context, id string, req *UpdateDatabaseRequest) (*UpdateDatabaseResponse, error)
-	DeleteDatabase(ctx context.Context, id string) (*DeleteDatabaseResponse, error)
 	CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error)
 	GetWordPressSite(ctx context.Context, id string) (*GetWordPressSiteResponse, error)
 	GetWordPressSites(ctx context.Context) (*GetWordPressSitesResponse, error)
@@ -222,63 +159,6 @@ type KinstaClient interface {
 
 func (c *Client) CompanyID() string {
 	return c.companyID
-}
-
-func (c *Client) CreateDatabase(ctx context.Context, req *CreateDatabaseRequest) (*CreateDatabaseResponse, error) {
-	var createResponse CreateDatabaseResponse
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	err = c.do(ctx, http.MethodPost, "/databases", bytes.NewBuffer(body), &createResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &createResponse, nil
-}
-
-func (c *Client) GetDatabase(ctx context.Context, id string) (*GetDatabaseResponse, error) {
-	var getResponse GetDatabaseResponse
-
-	path := fmt.Sprintf("/databases/%s", id)
-	err := c.do(ctx, http.MethodGet, path, nil, &getResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &getResponse, nil
-}
-
-func (c *Client) UpdateDatabase(ctx context.Context, id string, req *UpdateDatabaseRequest) (*UpdateDatabaseResponse, error) {
-	var updateResponse UpdateDatabaseResponse
-
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("/databases/%s", id)
-	err = c.do(ctx, http.MethodPut, path, bytes.NewBuffer(body), &updateResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &updateResponse, nil
-}
-
-func (c *Client) DeleteDatabase(ctx context.Context, id string) (*DeleteDatabaseResponse, error) {
-	var deleteResponse DeleteDatabaseResponse
-
-	path := fmt.Sprintf("/databases/%s", id)
-	err := c.do(ctx, http.MethodDelete, path, nil, &deleteResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &deleteResponse, nil
 }
 
 func (c *Client) CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error) {
