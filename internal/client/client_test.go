@@ -724,7 +724,7 @@ func TestClient_GetWordPressEnvironment_Error(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, resp)
-	assert.Contains(t, err.Error(), "API error")
+	assert.True(t, IsNotFound(err), "expected NotFoundError for 404 response")
 }
 
 func TestClient_DeleteWordPressEnvironment(t *testing.T) {

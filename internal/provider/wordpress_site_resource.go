@@ -158,6 +158,10 @@ func resourceWordPressSiteRead(ctx context.Context, d *schema.ResourceData, m in
 
 	resp, err := c.GetWordPressSite(ctx, siteID)
 	if err != nil {
+		if client.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,21 @@ import (
 const (
 	DefaultBaseURL = "https://api.kinsta.com/v2"
 )
+
+// NotFoundError is returned by client methods when the API responds with 404.
+type NotFoundError struct {
+	Path string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("resource not found: %s", e.Path)
+}
+
+// IsNotFound returns true if err is a *NotFoundError.
+func IsNotFound(err error) bool {
+	var nfe *NotFoundError
+	return errors.As(err, &nfe)
+}
 
 type Client struct {
 	apiKey     string
@@ -48,6 +64,10 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, v 
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return &NotFoundError{Path: path}
+	}
 
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("API error: %s", resp.Status)
