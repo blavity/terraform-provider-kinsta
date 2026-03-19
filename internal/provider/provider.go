@@ -13,6 +13,7 @@ func Provider() *schema.Provider {
 			"api_key": {
 				Type:        schema.TypeString,
 				Required:    true,
+				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("KINSTA_API_KEY", nil),
 				Description: "The API key for the Kinsta API.",
 			},
