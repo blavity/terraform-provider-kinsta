@@ -1,0 +1,31 @@
+---
+page_title: "kinsta_wordpress_environment Resource - kinsta"
+subcategory: ""
+description: |-
+  Creates and manages a staging environment for a Kinsta WordPress site.
+---
+
+# kinsta_wordpress_environment (Resource)
+
+Creates and manages a staging or premium staging environment for an existing [`kinsta_wordpress_site`](kinsta_wordpress_site.md). Environment creation is asynchronous and typically takes 1–3 minutes.
+
+~> **Note on immutability:** All fields are `ForceNew`. Any configuration change destroys and recreates the environment.
+
+~> **Note on write-only fields:** Several fields (`is_premium`, `admin_email`, `admin_password`, `admin_user`, `site_title`, `wp_language`) are sent on creation but are not returned by the Kinsta API. Terraform preserves these in state but cannot detect out-of-band changes to them.
+
+## Example Usage
+
+{{ tffile "examples/resources/kinsta_wordpress_environment/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Environments can be imported using the format `site_id:environment_id`:
+
+```shell
+terraform import kinsta_wordpress_environment.staging <site_id>:<environment_id>
+```
+
+Both IDs are available from the MyKinsta URL when viewing an environment:
+`https://my.kinsta.com/sites/details/<site_id>/<environment_id>`

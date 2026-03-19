@@ -1,8 +1,13 @@
+project_name: terraform-provider-kinsta
+
 before:
   hooks:
     - go mod tidy
+
 builds:
-  - env:
+  - main: .
+    binary: terraform-provider-kinsta
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
@@ -10,24 +15,41 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
+    ldflags:
+      - -s -w
+    flags:
+      - -trimpath
+
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+  - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+
+signs:
+  - cmd: gpg
+    signature: "${artifact}.sig"
+    artifacts: checksum
+    args:
+      - "--batch"
+      - "--pinentry-mode"
+      - "loopback"
+      - "--passphrase"
+      - "{{ .Env.GPG_PASSPHRASE }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
+  version_template: "{{ incpatch .Version }}-next"
+
 release:
+  # release-please creates the GitHub Release with changelog notes;
+  # goreleaser appends the built artifacts without overwriting them.
+  mode: append
   github:
-    owner: kinsta
+    owner: blavity
     name: terraform-provider-kinsta

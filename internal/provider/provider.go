@@ -2,9 +2,11 @@ package provider
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kinsta/terraform-provider-kinsta/internal/client"
+
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func Provider() *schema.Provider {
@@ -13,6 +15,7 @@ func Provider() *schema.Provider {
 			"api_key": {
 				Type:        schema.TypeString,
 				Required:    true,
+				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("KINSTA_API_KEY", nil),
 				Description: "The API key for the Kinsta API.",
 			},
@@ -24,9 +27,8 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"kinsta_database":         resourceDatabase(),
-			"kinsta_application":      resourceApplication(),
-			"kinsta_wordpress_site": resourceWordPressSite(),
+			"kinsta_wordpress_site":        resourceWordPressSite(),
+			"kinsta_wordpress_environment": resourceWordPressEnvironment(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure,

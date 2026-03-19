@@ -1,0 +1,31 @@
+---
+page_title: "kinsta_wordpress_site Resource - kinsta"
+subcategory: ""
+description: |-
+  Creates and manages a Kinsta WordPress site.
+---
+
+# kinsta_wordpress_site (Resource)
+
+Creates and manages a [Kinsta WordPress site](https://kinsta.com/wordpress-hosting/). Site creation is asynchronous and typically takes 1–3 minutes.
+
+~> **Note on immutability:** All fields are `ForceNew`. Any configuration change destroys and recreates the site.
+
+~> **Note on write-only fields:** Admin credentials (`admin_email`, `admin_password`, `admin_user`) and `site_title` are sent on creation but are not returned by the Kinsta API. Terraform preserves these in state but cannot detect out-of-band changes to them.
+
+## Example Usage
+
+{{ tffile "examples/resources/kinsta_wordpress_site/resource.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+WordPress sites can be imported using the site ID:
+
+```shell
+terraform import kinsta_wordpress_site.example <site_id>
+```
+
+The site ID is available as the `site_id` attribute after creation, or from the MyKinsta URL:
+`https://my.kinsta.com/sites/details/<site_id>/...`

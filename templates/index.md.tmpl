@@ -1,0 +1,26 @@
+---
+page_title: "Provider: Kinsta"
+description: |-
+  Manage Kinsta WordPress hosting resources — sites and environments — using Terraform.
+---
+
+# Kinsta Provider
+
+The Kinsta provider manages [WordPress hosting](https://kinsta.com/wordpress-hosting/) resources via the [MyKinsta API](https://api-docs.kinsta.com). Use it to create and manage WordPress sites and their staging environments as code.
+
+## Authentication
+
+The provider requires a Kinsta API key and your company ID. Both can be obtained from the [MyKinsta dashboard](https://my.kinsta.com/company/api-keys).
+
+Set credentials via environment variables (recommended for CI/CD):
+
+```shell
+export KINSTA_API_KEY="your-api-key"
+export KINSTA_COMPANY_ID="your-company-id"
+```
+
+## Example Usage
+
+{{ tffile "examples/provider/provider.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

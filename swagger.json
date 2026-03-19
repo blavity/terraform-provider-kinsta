@@ -2,12 +2,16 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Kinsta API",
-    "version": "1.75.0",
+    "version": "1.87.0",
     "description": "# Introduction\n\nWelcome to the API Reference of Kinsta’s REST API. With this API, you can leverage some of our platform's features in your own applications and automated workflows. Our API receives and returns JSON formatted requests and responses.\n\nThroughout this reference, you can see the schema of our API endpoints along with explanations and usage examples. You can try out the API with the “Try it” console and find code examples in a few popular programming languages. We’ve also made it easy to copy the code examples so you can quickly incorporate them into your application or workflow.\n\n**Note:** To use the “Try it” console, you’ll need your API key (Bearer Token in the console) and any required parameters for the endpoint you want to test.\n\nFor more details on getting started and some common use cases, check out [Kinsta API](https://kinsta.com/docs/kinsta-api).\n",
     "termsOfService": "https://kinsta.com/legal/terms-service/",
     "x-logo": {
       "url": "https://kinsta-api-resources.s3.amazonaws.com/kinsta-api-logo-light.svg",
       "href": "/"
+    },
+    "x-meta": {
+      "title": "Kinsta API - Kinsta® Docs",
+      "description": "Kinsta's REST API provides a streamlined and efficient way to work with our platform, allowing you to efficiently retrieve data, perform actions, and automate tasks."
     }
   },
   "servers": [
@@ -29,12 +33,20 @@
       "description": "With the `avaiable-regions` endpoint, you an get a list of [Data Center Locations](https://kinsta.com/docs/service-information/data-center-locations/) that are available for the sites within your company. \n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
     },
     {
+      "name": "API Keys",
+      "description": "The `api-keys` endpoint can be used to retrieve the list of [API Keys](https://kinsta.com/docs/kinsta-api/#authentication-and-user-access-api-key) from your MyKinsta company. \n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
+    },
+    {
+      "name": "Activity Logs",
+      "description": "The `activity-logs` endpoint can be used to retrieve the data from the [Company Activity Log](https://kinsta.com/docs/company-settings/activity-log/#company-activity-log).\n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
+    },
+    {
       "name": "WordPress Sites",
-      "description": "With the `sites` endpoint, you can get a list of your company’s WordPress sites, details for a specific site, and details about a site’s environment ([live](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site), [staging](https://kinsta.com/docs/wordpress-hosting/staging-environment), and/or [premium staging](https://kinsta.com/docs/wordpress-hosting/staging-environment#premium-staging-environments)). You can also perform actions like:\n\n* [Create a new site](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site#option-1-install-wordpress).\n* [Clone an existing site](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site#option-3-clone-an-existing-environment).\n* [Create a plain site without WordPress (empty environment)](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site#option-2-dont-install-wordpress-empty-environment).\n* [Delete a site](https://kinsta.com/docs/wordpress-hosting/site-management#delete-a-wordpress-site).\n* [Reset a site](https://kinsta.com/docs/wordpress-hosting/site-management/#reset-a-wordpress-site)\n\nDepending on the parameters, **site creation** might take around one to a few minutes. This is why this endpoint responds with `202 Accepted` with an `operation_id` in the body, which you can use with the `/operations` endpoint to check the progress. \n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id`, `site_id` and `environment_id` are shown in the URL in MyKinsta when you access an environment, for example in the URL `https://my.kinsta.com/sites/details/fbab4927-e354-4044-b226-29ac0fbd20ca/c84ce214-69b9-4a32-8e67-880672cf1d38?idCompany=bdd25d71-5706-4890-870f-1adda17c505d`:\n- The `site_id` is `fbab4927-e354-4044-b226-29ac0fbd20ca` \n- The `environment_id` is `c84ce214-69b9-4a32-8e67-880672cf1d38` \n- The `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`\n\n**Important**: due to a delay in the operation initialization process, the site creation operation can return `404 Not Found` in the first few seconds. So, when you integrate it into your script or application, please consider this delay when polling the `operation` status.\n"
+      "description": "With the `sites` endpoint, you can get a list of your company’s WordPress sites, details for a specific site, and details about a site’s environment ([live](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site), [staging](https://kinsta.com/docs/wordpress-hosting/staging-environment), and/or [premium staging](https://kinsta.com/docs/wordpress-hosting/staging-environment#premium-staging-environments)). You can also perform actions like:\n\n* [Create a new site](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site#option-1-install-wordpress).\n* [Clone an existing site](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site#option-3-clone-an-existing-environment).\n* [Create a plain site without WordPress (empty environment)](https://kinsta.com/docs/wordpress-hosting/wordpress-getting-started/new-site#option-2-dont-install-wordpress-empty-environment).\n* [Delete a site](https://kinsta.com/docs/wordpress-hosting/site-management#delete-a-wordpress-site).\n* [Reset a site](https://kinsta.com/docs/wordpress-hosting/site-management/#reset-a-wordpress-site).\n\nYou can also `GET` the following [Ananlytics](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/) data for each site:\n* [Visits](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#visits)\n* [Bandwidth](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#bandwidth)\n* [CDN bandwidth](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#cdn-bandwidth)\n\nDepending on the parameters, **site creation** might take around one to a few minutes. This is why this endpoint responds with `202 Accepted` with an `operation_id` in the body, which you can use with the `/operations` endpoint to check the progress. \n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id`, `site_id` and `environment_id` are shown in the URL in MyKinsta when you access an environment, for example in the URL `https://my.kinsta.com/sites/details/fbab4927-e354-4044-b226-29ac0fbd20ca/c84ce214-69b9-4a32-8e67-880672cf1d38?idCompany=bdd25d71-5706-4890-870f-1adda17c505d`:\n- The `site_id` is `fbab4927-e354-4044-b226-29ac0fbd20ca` \n- The `environment_id` is `c84ce214-69b9-4a32-8e67-880672cf1d38` \n- The `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`\n\n**Important**: due to a delay in the operation initialization process, the site creation operation can return `404 Not Found` in the first few seconds. So, when you integrate it into your script or application, please consider this delay when polling the `operation` status.\n"
     },
     {
       "name": "WordPress Site Environments",
-      "description": "The available WordPress site environments include:\n* [Live](https://kinsta.com/blog/wordpress-api/)\n* [Staging](https://kinsta.com/docs/wordpress-hosting/staging-environment)\n* [Premium Staging](https://kinsta.com/docs/wordpress-hosting/staging-environment#premium-staging-environments)\n\nUsing the `environments` endpoint, you can:\n* Get information about your site’s environments.\n* [Create a new environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#create-wordpress-staging-environment) (with or [without WordPress](https://kinsta.com/docs/wordpress-hosting/staging-environment#option-3-dont-install-wordpress-empty-environment)).\n* [Push an environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#push-staging-to-live-1)\n* [Clone an existing environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#option-1-clone-an-existing-environment).\n* [Delete an environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#delete-and-refresh-staging-environment).\n* [Change PHP allocation settings](https://kinsta.com/docs/wordpress-hosting/php/wordpress-php-performance/#change-php-performance).\n* [Change the webroot subfolder](https://kinsta.com/docs/wordpress-hosting/site-management/#change-your-sites-path) of an environment.\n\nYou can obtain the `site_id` using the `GET` request with the [WordPress Sites](https://api-docs.kinsta.com/tag/WordPress-Sites#operation/getSites) endpoint. \n\nThe `site_id` is also shown in the URL in MyKinsta when you access the environment, for example in the URL `https://my.kinsta.com/sites/details/fbab4927-e354-4044-b226-29ac0fbd20ca/c84ce214-69b9-4a32-8e67-880672cf1d38?idCompany=bdd25d71-5706-4890-870f-1adda17c505d`:\n- The `site_id` is `fbab4927-e354-4044-b226-29ac0fbd20ca` \n- The `environment_id` is `c84ce214-69b9-4a32-8e67-880672cf1d38` \n- The `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`\n\nThe `change-environment-php-allocation` and `change-site-php-allocation` endpoints are not currently available to customers who have any of following plans: Single 1.25M or above, WP 60 or above, Agency, or a custom plan.\n\nThe [PHP memory limit](https://kinsta.com/docs/wordpress-hosting/php/#php-memory-limit) and number of [PHP threads](https://kinsta.com/docs/wordpress-hosting/php/#php-threads) must add up to the existing total memory pool of the site. You can only change the total memory pool within [PHP performance](https://kinsta.com/docs/wordpress-hosting/php/wordpress-php-performance/) in [MyKinsta](https://my.kinsta.com/). \n\n`change-environment-php-allocation` can only be used for premium staging environments. \n\n`change-site-php-allocation` updates the PHP memory limit of the live environment and all standard staging environments. Strandard staging environments will always have 2 PHP threads regardless of their memory allocated. You cannot use this endpoint to update premium staging environments.\n\nWhen using the `change-webroot-subfolder-of-environment` endpoint, the default web root path for a site is `/www/$site_path/public`. This default path cannot be changed, but you can append a subfolder, for example, `/www/$site_path/public/site`. To check the current path, use the `get-site-environments` endpoint, which displays the `web-root` field indicating any subfolder appended to `/public`. To revert the path to the default, send the request with an empty string `''` as the subfolder."
+      "description": "The available WordPress site environments include:\n* [Live](https://kinsta.com/blog/wordpress-api/)\n* [Staging](https://kinsta.com/docs/wordpress-hosting/staging-environment)\n* [Premium Staging](https://kinsta.com/docs/wordpress-hosting/staging-environment#premium-staging-environments)\n\nUsing the `environments` endpoint, you can:\n* Get information about your site’s environments.\n* [Create a new environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#create-wordpress-staging-environment) (with or [without WordPress](https://kinsta.com/docs/wordpress-hosting/staging-environment#option-3-dont-install-wordpress-empty-environment)).\n* [Push an environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#push-staging-to-live-1)\n* [Clone an existing environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#option-1-clone-an-existing-environment).\n* [Delete an environment](https://kinsta.com/docs/wordpress-hosting/staging-environment#delete-and-refresh-staging-environment).\n* [Change PHP allocation settings](https://kinsta.com/docs/wordpress-hosting/php/wordpress-php-performance/#change-php-performance).\n* [Change the webroot subfolder](https://kinsta.com/docs/wordpress-hosting/site-management/#change-your-sites-path) of an environment.\n* [Update redirect rules](https://kinsta.com/docs/wordpress-hosting/redirect-rules/).\n* [Manage SFTP access and settings](https://kinsta.com/docs/wordpress-hosting/connecting-with-sftp/).\n* [Generate a phpMyAdmin login link](https://kinsta.com/docs/wordpress-hosting/database-management/wordpress-database-access/#phpmyadmin).\n\nYou can obtain the `site_id` using the `GET` request with the [WordPress Sites](https://api-docs.kinsta.com/tag/WordPress-Sites#operation/getSites) endpoint. \n\nThe `site_id` is also shown in the URL in MyKinsta when you access the environment, for example in the URL `https://my.kinsta.com/sites/details/fbab4927-e354-4044-b226-29ac0fbd20ca/c84ce214-69b9-4a32-8e67-880672cf1d38?idCompany=bdd25d71-5706-4890-870f-1adda17c505d`:\n- The `site_id` is `fbab4927-e354-4044-b226-29ac0fbd20ca` \n- The `environment_id` is `c84ce214-69b9-4a32-8e67-880672cf1d38` \n- The `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`\n\nThe `change-environment-php-allocation` and `change-site-php-allocation` endpoints are not currently available to customers who have any of following plans: Single 1.25M or above, WP 60 or above, Agency, or a custom plan.\n\nThe [PHP memory limit](https://kinsta.com/docs/wordpress-hosting/php/#php-memory-limit) and number of [PHP threads](https://kinsta.com/docs/wordpress-hosting/php/#php-threads) must add up to the existing total memory pool of the site. You can only change the total memory pool within [PHP performance](https://kinsta.com/docs/wordpress-hosting/php/wordpress-php-performance/) in [MyKinsta](https://my.kinsta.com/). \n\n`change-environment-php-allocation` can only be used for premium staging environments. \n\n`change-site-php-allocation` updates the PHP memory limit of the live environment and all standard staging environments. Strandard staging environments will always have 2 PHP threads regardless of their memory allocated. You cannot use this endpoint to update premium staging environments.\n\nWhen using the `change-webroot-subfolder-of-environment` endpoint, the default web root path for a site is `/www/$site_path/public`. This default path cannot be changed, but you can append a subfolder, for example, `/www/$site_path/public/site`. To check the current path, use the `get-site-environments` endpoint, which displays the `web-root` field indicating any subfolder appended to `/public`. To revert the path to the default, send the request with an empty string `''` as the subfolder."
     },
     {
       "name": "WordPress Site Tools",
@@ -69,48 +81,52 @@
       "description": "You can use the `additional SFTP users` endpoint to:\n* [Enable or disable additional SFTP accounts](https://kinsta.com/docs/wordpress-hosting/connecting-with-sftp/#disable-enable-additional-sftp-users).\n* [Add additional SFTP accounts](https://kinsta.com/docs/wordpress-hosting/connecting-with-sftp/#additional-sftp-users).\n* Get a list of additional SFTP accounts.\n* [Remove additional SFTP accounts](https://kinsta.com/docs/wordpress-hosting/connecting-with-sftp/#remove-an-sftp-user).\n\nYou can obtain the `environment_id` using the `GET` request with the [WordPress Site Environments](https://api-docs.kinsta.com/tag/WordPress-Site-Environments#operation/getSiteEnvironments) endpoint. \n\nThe `environment_id` is also shown after the `site_id` in the URL in MyKinsta when you access the environment, for example in the URL `https://my.kinsta.com/sites/details/fbab4927-e354-4044-b226-29ac0fbd20ca/c84ce214-69b9-4a32-8e67-880672cf1d38?idCompany=bdd25d71-5706-4890-870f-1adda17c505d`:\n- The `site_id` is `fbab4927-e354-4044-b226-29ac0fbd20ca` \n- The `environment_id` is `c84ce214-69b9-4a32-8e67-880672cf1d38` \n- The `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`\n\nThe `sftp_account_id` is shown when you `GET` the list of additional SFTP users.  "
     },
     {
+      "name": "Analytics",
+      "description": "With the `Analytics` endpoint, you can `GET` the following analytics data:\n* [CDN bandwidth](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#cdn-bandwidth)\n* [Visits](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#visits)\n* [Bandwidth](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#bandwidth)\n* [Disk space](https://kinsta.com/docs/wordpress-hosting/wordpress-analytics-mykinsta/#disk-space)\n\nYou can obtain the `environment_id` using the `GET` request with the [WordPress Site Environments](https://api-docs.kinsta.com/tag/WordPress-Site-Environments#operation/getSiteEnvironments) endpoint. \n\nThe `environment_id` is also shown after the `site_id` in the URL in MyKinsta when you access the environment, for example in the URL `https://my.kinsta.com/sites/details/fbab4927-e354-4044-b226-29ac0fbd20ca/c84ce214-69b9-4a32-8e67-880672cf1d38?idCompany=bdd25d71-5706-4890-870f-1adda17c505d`:\n- The `site_id` is `fbab4927-e354-4044-b226-29ac0fbd20ca` \n- The `environment_id` is `c84ce214-69b9-4a32-8e67-880672cf1d38` \n- The `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`"
+    },
+    {
       "name": "Applications",
-      "description": "You can use the `applications` endpoint to:\n\n* Get a list of your company’s applications.\n* See information about a specific application, including [deployment details](https://kinsta.com/docs/application-hosting/build-deploy/application-deployments) and [processes](https://kinsta.com/docs/application-hosting/processes).\n* [Delete an application](https://kinsta.com/docs/application-hosting/application-settings#delete-application).\n* Send a `PUT` request to update details within the [application settings](https://kinsta.com/docs/application-hosting/application-settings), such as the build path, display name, default branch, and more.\n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nYou can use the `applications` endpoint to:\n\n* Get a list of your company’s applications.\n* See information about a specific application, including [deployment details](https://kinsta.com/docs/application-hosting/build-deploy/application-deployments) and [processes](https://kinsta.com/docs/application-hosting/processes).\n* [Delete an application](https://kinsta.com/docs/application-hosting/application-settings#delete-application).\n* Send a `PUT` request to update details within the [application settings](https://kinsta.com/docs/application-hosting/application-settings), such as the build path, display name, default branch, and more.\n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
     },
     {
       "name": "Application Deployments",
-      "description": "With the `deployments` endpoint, you can get [deployment details](https://kinsta.com/docs/application-hosting/build-deploy/application-deployments#details) like the deployment progress and more. \n\nYou can also send a `POST` request to the endpoint to manually or programmatically deploy an application. This request can be done from your terminal or using an automated script or CI/CD pipeline (e.g. [CircleCI](https://circleci.com/), [Jenkins](https://www.jenkins.io/), etc.).\n\nYou can obtain the `deployment_id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint.\n\nThe `deployment_id` is also shown in the URL within the deployment in MyKinsta, for example in the URL `https://my.kinsta.com/app/hello-world-astro-7u8mu/deployment/6783883e-4af8-47ab-a03a-3db6177d4291?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `deployment_id` is `6783883e-4af8-47ab-a03a-3db6177d4291`."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nWith the `deployments` endpoint, you can get [deployment details](https://kinsta.com/docs/application-hosting/build-deploy/application-deployments#details) like the deployment progress and more. \n\nYou can also send a `POST` request to the endpoint to manually or programmatically deploy an application. This request can be done from your terminal or using an automated script or CI/CD pipeline (e.g. [CircleCI](https://circleci.com/), [Jenkins](https://www.jenkins.io/), etc.).\n\nYou can obtain the `deployment_id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint.\n\nThe `deployment_id` is also shown in the URL within the deployment in MyKinsta, for example in the URL `https://my.kinsta.com/app/hello-world-astro-7u8mu/deployment/6783883e-4af8-47ab-a03a-3db6177d4291?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `deployment_id` is `6783883e-4af8-47ab-a03a-3db6177d4291`."
     },
     {
       "name": "Application Processes",
-      "description": "The `processes` endpoint can be used to get more details about an [application’s processes](https://kinsta.com/docs/application-hosting/processes), including the type, the [start command](https://kinsta.com/docs/application-hosting/build-deploy/application-start-command) (labeled entrypoint in the response), and more.\n\nYou can obtain the `id` from the [`applications/{id}`](https://api-docs.kinsta.com/tag/Applications#operation/getApplicationById) endpoint.\n"
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nThe `processes` endpoint can be used to get more details about an [application’s processes](https://kinsta.com/docs/application-hosting/processes), including the type, the [start command](https://kinsta.com/docs/application-hosting/build-deploy/application-start-command) (labeled entrypoint in the response), and more.\n\nYou can obtain the `id` from the [`applications/{id}`](https://api-docs.kinsta.com/tag/Applications#operation/getApplicationById) endpoint.\n"
     },
     {
       "name": "Internal Connections",
-      "description": " You can use the `internal connections` endpoint to send a `POST` request to create an [internal connection](https://kinsta.com/docs/application-hosting/application-connections#add-an-internal-connection) between your application and database hosted on Kinsta. This request can be done from your terminal or using an automated script or CI/CD pipeline (e.g. [CircleCI](https://circleci.com/), [Jenkins](https://www.jenkins.io/), etc.).\n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
+      "description": " **Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n \n You can use the `internal connections` endpoint to send a `POST` request to create an [internal connection](https://kinsta.com/docs/application-hosting/application-connections#add-an-internal-connection) between your application and database hosted on Kinsta. This request can be done from your terminal or using an automated script or CI/CD pipeline (e.g. [CircleCI](https://circleci.com/), [Jenkins](https://www.jenkins.io/), etc.).\n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
     },
     {
       "name": "Application CDN",
-      "description": "Kinsta's premium [CDN](https://kinsta.com/docs/application-hosting/application-cdn), powered by Cloudflare, significantly accelerates the delivery of your application's assets, ensuring faster and more efficient performance.\n\nWith the `cdn` endpoint, you can send a `POST` request to toggle the CDN on or off. \n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nKinsta's premium [CDN](https://kinsta.com/docs/application-hosting/application-cdn), powered by Cloudflare, significantly accelerates the delivery of your application's assets, ensuring faster and more efficient performance.\n\nWith the `cdn` endpoint, you can send a `POST` request to toggle the CDN on or off. \n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
     },
     {
       "name": "Application Edge Caching",
-      "description": "[Edge caching](https://kinsta.com/docs/application-hosting/application-edge-caching) saves your site/page cache to Cloudflare's global network of data centers.\n\nWith the `edge-cache` endpoint, you can send a `POST` request to toggle edge caching on or off. \n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\n[Edge caching](https://kinsta.com/docs/application-hosting/application-edge-caching) saves your site/page cache to Cloudflare's global network of data centers.\n\nWith the `edge-cache` endpoint, you can send a `POST` request to toggle edge caching on or off. \n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
     },
     {
       "name": "Application Clear Cache",
-      "description": "Effortlessly reset both Kinsta's premium [CDN](https://kinsta.com/docs/application-hosting/application-cdn), and Cloudflare's global [Edge Caching](https://kinsta.com/docs/application-hosting/application-edge-caching) network with the `clear-cache` endpoint, ensuring a comprehensive refresh of your application's assets.\n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nEffortlessly reset both Kinsta's premium [CDN](https://kinsta.com/docs/application-hosting/application-cdn), and Cloudflare's global [Edge Caching](https://kinsta.com/docs/application-hosting/application-edge-caching) network with the `clear-cache` endpoint, ensuring a comprehensive refresh of your application's assets.\n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
     },
     {
       "name": "Application Metrics",
-      "description": "The `metrics` endpoint can be used to get information about your [application's analytics](https://kinsta.com/docs/application-hosting/application-analytics) such as the bandwidth, build time, average response request and more. \n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nThe `metrics` endpoint can be used to get information about your [application's analytics](https://kinsta.com/docs/application-hosting/application-analytics) such as the bandwidth, build time, average response request and more. \n\nYou can obtain the `id` from the [`applications`](https://api-docs.kinsta.com/tag/Applications) endpoint."
     },
     {
       "name": "Databases",
-      "description": "You can use the `databases` endpoint to:\n\n* Get a list of your company’s databases.\n* See details about a specific database.\n* [Create a new datbase](https://kinsta.com/docs/database-hosting/database-getting-started/adding-a-database).\n* [Delete a database](https://kinsta.com/docs/database-hosting/database-settings#delete-database).\n* Send a `PUT` request to update the [database settings](https://kinsta.com/docs/database-hosting/database-settings), including the resource type and display name. \n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nYou can use the `databases` endpoint to:\n\n* Get a list of your company’s databases.\n* See details about a specific database.\n* [Create a new datbase](https://kinsta.com/docs/database-hosting/database-getting-started/adding-a-database).\n* [Delete a database](https://kinsta.com/docs/database-hosting/database-settings#delete-database).\n* Send a `PUT` request to update the [database settings](https://kinsta.com/docs/database-hosting/database-settings), including the resource type and display name. \n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
     },
     {
       "name": "Static Sites",
-      "description": "You can use the `static sites` endpoint to:\n\n* Get a list of your company’s static sites.\n* See information about a specific site, including the [deployment details](https://kinsta.com/docs/static-site-hosting/static-site-deployments#deployment-details-1).\n* [Delete a static site](https://kinsta.com/docs/static-site-hosting/static-site-settings#delete-site).\n* Send a `PUT` request to update details within the [site settings](https://kinsta.com/docs/static-site-hosting/static-site-settings#edit-details), such as the build command, display name, default branch, and more.\n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nYou can use the `static sites` endpoint to:\n\n* Get a list of your company’s static sites.\n* See information about a specific site, including the [deployment details](https://kinsta.com/docs/static-site-hosting/static-site-deployments#deployment-details-1).\n* [Delete a static site](https://kinsta.com/docs/static-site-hosting/static-site-settings#delete-site).\n* Send a `PUT` request to update details within the [site settings](https://kinsta.com/docs/static-site-hosting/static-site-settings#edit-details), such as the build command, display name, default branch, and more.\n\nYou can obtain the `company_id` from [MyKinsta](https://my.kinsta.com/) > **username** > **Company settings** > **Billing details**.\n\nThe `company_id` is also shown in the URL in MyKinsta, for example in the URL `https://my.kinsta.com/?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `company_id` is `bdd25d71-5706-4890-870f-1adda17c505d`."
     },
     {
       "name": "Static Site Deployments",
-      "description": "With the `deployments` endpoint, you can get [deployment details](https://kinsta.com/docs/static-site-hosting/static-site-deployments#deployment-details-1) like the deployment progress and more. \n\nYou can also send a `POST` request to the endpoint to manually or programmatically deploy a static site. This request can be done from your terminal or using an automated script or CI/CD pipeline (e.g. [CircleCI](https://circleci.com/), [Jenkins](https://www.jenkins.io/), etc.).\n\nYou can obtain the `deployment_id` from the [`static_sites`](https://api-docs.kinsta.com/tag/Static-Sites) endpoint.\n\nThe `deployment_id` is also shown in the URL within the deployment in MyKinsta, for example in the URL `https://my.kinsta.com/staticSite/hello-world-astro-7u8mu/deployment/6783883e-4af8-47ab-a03a-3db6177d4291?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `deployment_id` is `6783883e-4af8-47ab-a03a-3db6177d4291`."
+      "description": "**Note:** Application, Database, and Static Site Hosting will be removed from both MyKinsta and the MyKinsta API on **31 January 2026**. Your existing services will continue to run without interruption; however, you will need to manage them through the [Sevalla dashboard](https://app.sevalla.com/login) using your MyKinsta credentials.\n\nAfter this date, all API endpoints related to Application, Database, and Static Site Hosting will be provided exclusively through the [Sevalla API](https://api-docs.sevalla.com/). For more details about this transition, see [Sevalla](https://kinsta.com/docs/service-information/sevalla-overview/).\n\nWith the `deployments` endpoint, you can get [deployment details](https://kinsta.com/docs/static-site-hosting/static-site-deployments#deployment-details-1) like the deployment progress and more. \n\nYou can also send a `POST` request to the endpoint to manually or programmatically deploy a static site. This request can be done from your terminal or using an automated script or CI/CD pipeline (e.g. [CircleCI](https://circleci.com/), [Jenkins](https://www.jenkins.io/), etc.).\n\nYou can obtain the `deployment_id` from the [`static_sites`](https://api-docs.kinsta.com/tag/Static-Sites) endpoint.\n\nThe `deployment_id` is also shown in the URL within the deployment in MyKinsta, for example in the URL `https://my.kinsta.com/staticSite/hello-world-astro-7u8mu/deployment/6783883e-4af8-47ab-a03a-3db6177d4291?idCompany=bdd25d71-5706-4890-870f-1adda17c505d` the `deployment_id` is `6783883e-4af8-47ab-a03a-3db6177d4291`."
     },
     {
       "name": "Operations",
@@ -189,6 +205,73 @@
         }
       }
     },
+    "/company/{id}/api-keys": {
+      "get": {
+        "operationId": "getCompanyApiKeys",
+        "summary": "Get list of company API Keys",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "API Keys"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of company API Keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyApiKeysResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find the company or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while retrieving company API Keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications": {
       "get": {
         "operationId": "getApplications",
@@ -198,6 +281,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Applications"
         ],
@@ -285,6 +370,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Applications"
         ],
@@ -351,6 +438,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Applications"
         ],
@@ -416,6 +505,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Applications"
         ],
@@ -479,6 +570,7 @@
         "operationId": "getApplicationByName",
         "summary": "Get application by name",
         "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
@@ -551,6 +643,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Internal Connections"
         ],
@@ -619,6 +713,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application CDN"
         ],
@@ -677,6 +773,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Edge Caching"
         ],
@@ -735,6 +833,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Clear Cache"
         ],
@@ -788,12 +888,13 @@
       "get": {
         "operationId": "getApplicationBandwidth",
         "summary": "Bandwidth",
-        "description": "Total data that is transmitted in the selected time period.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Metrics"
         ],
@@ -895,12 +996,13 @@
       "get": {
         "operationId": "getApplicationBuildTime",
         "summary": "Build Time",
-        "description": "Total time your application has taken to be built.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Metrics"
         ],
@@ -1002,12 +1104,13 @@
       "get": {
         "operationId": "getApplicationRunTime",
         "summary": "Run Time",
-        "description": "Total time the application is running after being built and deployed.",
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
         "tags": [
           "Application Metrics"
         ],
@@ -1109,12 +1212,13 @@
       "get": {
         "operationId": "getApplicationHttpRequests",
         "summary": "HTTP Requests per Minute",
-        "description": "Total average requests per minute.",
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
         "tags": [
           "Application Metrics"
         ],
@@ -1216,12 +1320,13 @@
       "get": {
         "operationId": "getApplicationAverageResponseTime",
         "summary": "Average Response Time",
-        "description": "Average request response time. If \"percent\" is set, the P50 or P95 response time will be returned.",
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
         "tags": [
           "Application Metrics"
         ],
@@ -1341,12 +1446,13 @@
       "get": {
         "operationId": "getApplicationSlowestRequests",
         "summary": "Slowest Requests",
-        "description": "Slowest response shows you exactly which responses are the slowest on your application.",
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
         "tags": [
           "Application Metrics"
         ],
@@ -1535,12 +1641,13 @@
       "get": {
         "operationId": "getApplicationCpuUsage",
         "summary": "CPU Usage",
-        "description": "An average of the total CPU usage for the selected time period, as a percentage of instance’s CPU resources.",
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
         "tags": [
           "Application Metrics"
         ],
@@ -1642,12 +1749,13 @@
       "get": {
         "operationId": "getApplicationMemoryUsage",
         "summary": "Memory Usage",
-        "description": "An average of the total Memory (RAM) usage for the selected time period.",
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
         "tags": [
           "Application Metrics"
         ],
@@ -1754,6 +1862,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Deployments"
         ],
@@ -1821,6 +1931,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Processes"
         ],
@@ -1886,6 +1998,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Processes"
         ],
@@ -1953,6 +2067,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Deployments"
         ],
@@ -2009,6 +2125,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Application Deployments"
         ],
@@ -2065,6 +2183,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Pipelines"
         ],
@@ -2152,6 +2272,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Pipelines"
         ],
@@ -2220,6 +2342,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Databases"
         ],
@@ -2305,6 +2429,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Databases"
         ],
@@ -2371,6 +2497,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Databases"
         ],
@@ -2457,6 +2585,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Databases"
         ],
@@ -2533,6 +2663,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Databases"
         ],
@@ -2596,6 +2728,7 @@
         "operationId": "getDatabaseByName",
         "summary": "Get database by name",
         "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "security": [
           {
             "bearerAuth": []
@@ -3621,7 +3754,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -3687,7 +3819,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -3764,7 +3895,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -3841,7 +3971,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -3907,7 +4036,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -3984,7 +4112,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -4061,7 +4188,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -4136,7 +4262,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -4211,7 +4336,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -4347,7 +4471,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -4983,7 +5106,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5061,7 +5183,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5139,7 +5260,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5217,7 +5337,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5687,7 +5806,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5755,7 +5873,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5823,7 +5940,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -5900,7 +6016,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6044,7 +6159,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6148,7 +6262,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6216,7 +6329,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6282,7 +6394,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6407,7 +6518,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6557,7 +6667,6 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
               "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
             },
             "required": true,
@@ -6775,6 +6884,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Sites"
         ],
@@ -6862,6 +6973,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Sites"
         ],
@@ -6928,6 +7041,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Sites"
         ],
@@ -6994,6 +7109,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Sites"
         ],
@@ -7062,6 +7179,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Site Deployments"
         ],
@@ -7130,6 +7249,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Site Deployments"
         ],
@@ -7186,6 +7307,8 @@
             "bearerAuth": []
           }
         ],
+        "deprecated": true,
+        "description": "Deprecated in favor of <a href=\"https://api-docs.sevalla.com\" target=\"_blank\">Sevalla API docs</a>.",
         "tags": [
           "Static Site Deployments"
         ],
@@ -7289,6 +7412,148 @@
           },
           "500": {
             "description": "Error occurred while retrieving available regions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/company/{id}/activity-logs": {
+      "get": {
+        "operationId": "getUserActivityLogs",
+        "summary": "Get list of company activity logs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Activity Logs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "default": 10,
+              "example": 10
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "default": 0,
+              "example": 3
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "siteActions",
+                "kinstaDns",
+                "migrations",
+                "billing",
+                "notifications",
+                "userManagement",
+                "personalSettings",
+                "samlSso"
+              ],
+              "example": "siteActions"
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "site_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "id_initiated_by",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "id_api_key",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "da",
+                "de",
+                "en",
+                "es",
+                "fr",
+                "it",
+                "ja",
+                "nl",
+                "pt",
+                "sv"
+              ],
+              "default": "en"
+            },
+            "required": false,
+            "name": "language",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found activity logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getUserActivityLogs-Response"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find the activity logs or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while retrieving activity logs",
             "content": {
               "application/json": {
                 "schema": {
@@ -7421,6 +7686,1357 @@
           },
           "500": {
             "description": "Error occurred while changing access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/ssh/set-password-status": {
+      "post": {
+        "operationId": "generateSftpPassword",
+        "summary": "Enable/Disable SFTP/SSH password access",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSftpSshPasswordAccess-Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enable/Disable SFTP/SSH password access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetSftpSshPasswordAccess-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while changing password access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/ssh/generate-password": {
+      "post": {
+        "operationId": "generateSftpPassword",
+        "summary": "Generate SFTP password",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Generate SFTP/SSH password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateSftpPassword-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while generating password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/ssh/get-allowed-ips": {
+      "get": {
+        "operationId": "getSftpIpAllowList",
+        "summary": "Get SFTP/SSH IP allowlist",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found IP allowlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSftpSshAllowlist-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find environment or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while changing ip allowlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/ssh/set-allowed-ips": {
+      "post": {
+        "operationId": "setSftpIpAllowlist",
+        "summary": "Update SFTP/SSH IP allowlist",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSftpIpAllowlist-Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update SFTP/SSH IP allowlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetSftpIpAllowlist-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while updating IP allowlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{site_id}/environments/{env_id}/ssh/config": {
+      "get": {
+        "operationId": "getSftpConfig",
+        "summary": "Get SFTP/SSH connections config",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found SFTP config",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/GetSftpConfig-Response"
+                    },
+                    {
+                      "properties": {
+                        "port": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "host": {
+                          "type": "string"
+                        },
+                        "user": {
+                          "type": "string"
+                        },
+                        "ssh_command": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "port",
+                        "name",
+                        "host",
+                        "user",
+                        "ssh_command"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find environment or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/ssh/change-expiration-interval": {
+      "post": {
+        "operationId": "chaneSftpPasswordExpiration",
+        "summary": "Change SFTP/SSH password expiration interval",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeSftpPasswordExpiration-Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Change SFTP/SSH password expiration interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeSftpPasswordExpiration-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while changing password expiration interval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/ssh/password": {
+      "get": {
+        "operationId": "getSftpPassword",
+        "summary": "Get SFTP/SSH password",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found SFTP config",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSftpPassword-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find environment or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{site_id}/usage/visits/this-month": {
+      "get": {
+        "operationId": "getVisits",
+        "summary": "Get Visits usage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "site_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found visits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetVisitsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find visits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while retrieving visits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{site_id}/usage/bandwidth/this-month": {
+      "get": {
+        "operationId": "getBandwidth",
+        "summary": "Get server bandwidth usage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "site_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found server bandwidth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetBandwidthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find server bandwidth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while retrieving server bandwidth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{site_id}/usage/cdn-bandwidth/this-month": {
+      "get": {
+        "operationId": "getCdnBandwidth",
+        "summary": "Get CDN bandwidth usage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "site_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully found CDN bandwidth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCdnBandwidthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find CDN bandwidth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while retrieving CDN bandwidth",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/analytics/cdn-bandwidth": {
+      "get": {
+        "operationId": "getCdnBandwidth",
+        "summary": "Get CDN Bandwidth",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "env_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24_hours",
+                "7_days",
+                "30_days",
+                "60_days"
+              ],
+              "default": "7_days",
+              "example": "30_days"
+            },
+            "required": false,
+            "name": "time_span",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "company_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-20"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-30"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Getting CDN Bandwidth analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Analytics-Cdn-Bandwidth-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find the company or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while getting analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/analytics/visits": {
+      "get": {
+        "operationId": "getVisits",
+        "summary": "Get visits",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "env_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24_hours",
+                "7_days",
+                "30_days",
+                "60_days"
+              ],
+              "default": "7_days",
+              "example": "30_days"
+            },
+            "required": false,
+            "name": "time_span",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "company_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-20"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-30"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Getting visits analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Analytics-Visits-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find the company or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while getting analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/analytics/bandwidth": {
+      "get": {
+        "operationId": "getBandwidth",
+        "summary": "Get server bandwidth",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "env_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "24_hours",
+                "7_days",
+                "30_days",
+                "60_days"
+              ],
+              "default": "7_days",
+              "example": "30_days"
+            },
+            "required": false,
+            "name": "time_span",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "company_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-20"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-30"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Getting server bandwidth analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Analytics-Bandwidth-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find the company or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while getting analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/analytics/diskspace": {
+      "get": {
+        "operationId": "getDiskSpace",
+        "summary": "Get Disk space",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "Analytics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "env_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7_days",
+                "30_days",
+                "60_days"
+              ],
+              "default": "7_days",
+              "example": "30_days"
+            },
+            "required": false,
+            "name": "time_span",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "company_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^-?(0[0-9]|1[0-4]):00$",
+              "example": "02:00"
+            },
+            "required": true,
+            "name": "time_zone",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-20"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "example": "2025-10-30"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Getting Disk space analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Analytics-Disk-Space-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not find the company or the user does not have permissions to retrieve data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema404"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while getting analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/run-wp-cli-command": {
+      "post": {
+        "operationId": "runWPCLICommand",
+        "summary": "Run a WP CLI command",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "env_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/runWPCLICommand-Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Running a WP CLI command action started. Check MyKinsta for status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/runWPCLICommand-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while running a WP CLI command",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema500"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/environments/{env_id}/pma-login-token": {
+      "post": {
+        "operationId": "generatePhpMyAdminLoginLink",
+        "summary": "Generate phpMyAdmin login link",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "WordPress Site Environments"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+            },
+            "required": true,
+            "name": "env_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "phpMyAdmin login link generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/generatePhpMyAdminLoginLink-Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "One or more of the required parameters were not provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema400"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid API key provided to the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponseSchema401"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occurred while generating the phpMyAdmin login link",
             "content": {
               "application/json": {
                 "schema": {
@@ -7683,6 +9299,17 @@
                 "type": "string",
                 "example": "firstsite"
               },
+              "hibernation_enabled": {
+                "type": "boolean",
+                "example": true
+              },
+              "hibernate_after_seconds": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "example": 900
+              },
               "status": {
                 "type": "string",
                 "example": "deploymentSuccess"
@@ -7744,20 +9371,127 @@
                     "key"
                   ]
                 }
+              },
+              "internal_connections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+                    },
+                    "app": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "unique-name"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    },
+                    "database": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "unique-db-name"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "app",
+                    "database"
+                  ]
+                }
               }
             },
             "required": [
               "id",
               "name",
               "display_name",
+              "hibernation_enabled",
+              "hibernate_after_seconds",
               "status",
               "deployments",
-              "processes"
+              "processes",
+              "internal_connections"
             ]
           }
         },
         "required": [
           "app"
+        ]
+      },
+      "CompanyApiKeysResponseSchema": {
+        "type": "object",
+        "properties": {
+          "api_keys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Public API Key"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "revoked",
+                    "expired"
+                  ],
+                  "example": "active"
+                },
+                "expires_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "example": "2028-08-21T08:15:21.872Z"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "status",
+                "expires_at"
+              ]
+            }
+          }
+        },
+        "required": [
+          "api_keys"
         ]
       },
       "GetAppRequest": {
@@ -8935,6 +10669,14 @@
           "entrypoint": {
             "type": "string",
             "example": "npm start"
+          },
+          "internal_hostname": {
+            "type": "string",
+            "example": "my-service-h8vs7-web.my-service-h8vs7.svc.cluster.local"
+          },
+          "internal_port": {
+            "type": "number",
+            "example": 8080
           }
         },
         "required": [
@@ -8944,7 +10686,9 @@
           "instance_count",
           "scaling_strategy",
           "resource_type_name",
-          "entrypoint"
+          "entrypoint",
+          "internal_hostname",
+          "internal_port"
         ]
       },
       "MKProcessByIdSchema": {
@@ -9391,6 +11135,14 @@
           "default_branch": {
             "type": "string",
             "example": "main"
+          },
+          "hibernation_enabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "hibernate_after_seconds": {
+            "type": "number",
+            "example": 900
           }
         }
       },
@@ -9456,6 +11208,17 @@
               "default_branch": {
                 "type": "string",
                 "example": "main"
+              },
+              "hibernation_enabled": {
+                "type": "boolean",
+                "example": true
+              },
+              "hibernate_after_seconds": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "example": 900
               }
             },
             "required": [
@@ -9469,7 +11232,9 @@
               "docker_context",
               "display_name",
               "auto_deploy",
-              "default_branch"
+              "default_branch",
+              "hibernation_enabled",
+              "hibernate_after_seconds"
             ]
           }
         },
@@ -11472,7 +13237,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -11822,7 +13586,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -12418,7 +14181,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -12471,7 +14233,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -12529,7 +14290,6 @@
         "properties": {
           "site_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -12582,7 +14342,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -12838,7 +14597,6 @@
         "properties": {
           "environment_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           },
           "image_optimization_type": {
@@ -12962,7 +14720,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -13040,7 +14797,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -13119,7 +14875,6 @@
         "properties": {
           "target_env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -13171,7 +14926,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -13248,7 +15002,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -13319,7 +15072,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -13462,10 +15214,26 @@
                 "items": {
                   "$ref": "#/components/schemas/GetAdditionalSftpAccountsAdditionalSftpAccount"
                 }
+              },
+              "container_info": {
+                "type": "object",
+                "properties": {
+                  "additional_sftp_accounts_port": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "example": "12374"
+                  }
+                },
+                "required": [
+                  "additional_sftp_accounts_port"
+                ]
               }
             },
             "required": [
-              "additional_sftp_accounts"
+              "additional_sftp_accounts",
+              "container_info"
             ]
           }
         },
@@ -13561,7 +15329,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -14359,12 +16126,304 @@
           "company"
         ]
       },
+      "getUserActivityLogs-Query": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "default": 10,
+            "example": 10
+          },
+          "offset": {
+            "type": "number",
+            "default": 0,
+            "example": 3
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "siteActions",
+              "kinstaDns",
+              "migrations",
+              "billing",
+              "notifications",
+              "userManagement",
+              "personalSettings",
+              "samlSso"
+            ],
+            "example": "siteActions"
+          },
+          "site_id": {
+            "type": "string"
+          },
+          "id_initiated_by": {
+            "type": "string"
+          },
+          "id_api_key": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "da",
+              "de",
+              "en",
+              "es",
+              "fr",
+              "it",
+              "ja",
+              "nl",
+              "pt",
+              "sv"
+            ],
+            "default": "en"
+          }
+        }
+      },
+      "getUserActivityLogs-UserAgentInfo": {
+        "type": "object",
+        "properties": {
+          "browser_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Chrome"
+          },
+          "browser_version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "126.0.0"
+          },
+          "os_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "macOS"
+          }
+        },
+        "required": [
+          "browser_name",
+          "browser_version",
+          "os_name"
+        ]
+      },
+      "getUserActivityLogs-InitiatedBy": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "admin-user"
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "admin"
+          },
+          "full_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Jane"
+          },
+          "first_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Smith"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "full_name",
+          "first_name"
+        ]
+      },
+      "getUserActivityLogs-ApiKeyInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cf5b98a0-6fdd-4997-9c1f-e73d566533be"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Public API Key"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "getUserActivityLogs-UserActivityItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 34181968
+          },
+          "site_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1665382600770
+          },
+          "is_done": {
+            "type": "boolean",
+            "example": true
+          },
+          "has_failed": {
+            "type": "boolean",
+            "example": false
+          },
+          "has_warning": {
+            "type": "boolean",
+            "example": false
+          },
+          "type": {
+            "type": "string",
+            "example": "deleteSite"
+          },
+          "public_error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "The environment is blocked by another process. Please try again a bit later."
+          },
+          "ip_address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "203.0.113.42"
+          },
+          "initiated_by": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/getUserActivityLogs-InitiatedBy"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "user_agent_info": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/getUserActivityLogs-UserAgentInfo"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "api_key_info": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/getUserActivityLogs-ApiKeyInfo"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "descriptions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Delete site \"Test ABC\""
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "site_id",
+          "created_at",
+          "is_done",
+          "has_failed",
+          "has_warning",
+          "type",
+          "public_error",
+          "ip_address",
+          "descriptions"
+        ]
+      },
+      "getUserActivityLogs-UserActivityLog": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/getUserActivityLogs-UserActivityItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 42
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "getUserActivityLogs-Response": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "object",
+            "properties": {
+              "activity_logs": {
+                "$ref": "#/components/schemas/getUserActivityLogs-UserActivityLog"
+              }
+            },
+            "required": [
+              "activity_logs"
+            ]
+          }
+        },
+        "required": [
+          "company"
+        ]
+      },
       "SetSftpSshAccess-Params": {
         "type": "object",
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -14400,7 +16459,6 @@
         "properties": {
           "env_id": {
             "type": "string",
-            "format": "uuid",
             "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
           }
         },
@@ -14434,6 +16492,944 @@
         },
         "required": [
           "environment"
+        ]
+      },
+      "SetSftpSshPasswordAccess-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "SetSftpSshPasswordAccess-Body": {
+        "type": "object",
+        "properties": {
+          "is_enabled": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "is_enabled"
+        ]
+      },
+      "SetSftpSshPasswordAccess-Response": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GenerateSftpPassword-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "GenerateSftpPassword-Response": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GetSftpSshAllowlist-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "GetSftpSshAllowlist-Response": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "object",
+            "properties": {
+              "active_container": {
+                "type": "object",
+                "properties": {
+                  "stfp_ip_allowlist": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [
+                      "127.0.0.1"
+                    ]
+                  }
+                },
+                "required": [
+                  "stfp_ip_allowlist"
+                ]
+              }
+            },
+            "required": [
+              "active_container"
+            ]
+          }
+        },
+        "required": [
+          "environment"
+        ]
+      },
+      "SetSftpIpAllowlist-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "SetSftpIpAllowlist-Body": {
+        "type": "object",
+        "properties": {
+          "ip_allowlist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "127.0.0.1"
+            ]
+          }
+        },
+        "required": [
+          "ip_allowlist"
+        ]
+      },
+      "SetSftpIpAllowlist-Response": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GetSftpConfig-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          },
+          "site_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id",
+          "site_id"
+        ]
+      },
+      "GetSftpConfig-Response": {
+        "type": "object",
+        "properties": {
+          "site": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "usr": {
+                "type": "string"
+              },
+              "environment": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "activeContainer": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "lxdSshPort": {
+                        "type": "string"
+                      },
+                      "loadBalancer": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "extIP": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "extIP"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "lxdSshPort",
+                      "loadBalancer"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "activeContainer"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "displayName",
+              "usr",
+              "environment"
+            ]
+          }
+        },
+        "required": [
+          "site"
+        ]
+      },
+      "ChangeSftpPasswordExpiration-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "ChangeSftpPasswordExpiration-Body": {
+        "type": "object",
+        "properties": {
+          "exp_interval": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "days_7"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "days_30"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "days_90"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "hours_24"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "never"
+                ]
+              }
+            ],
+            "example": "days_7"
+          }
+        },
+        "required": [
+          "exp_interval"
+        ]
+      },
+      "ChangeSftpPasswordExpiration-Response": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "GetSftpPassword-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "GetSftpPassword-Response": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "sftp_password": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "sftp_password"
+            ]
+          }
+        },
+        "required": [
+          "environment"
+        ]
+      },
+      "GetVisitsResponse": {
+        "type": "object",
+        "properties": {
+          "site": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+              },
+              "this_month_usage": {
+                "type": "object",
+                "properties": {
+                  "visits": {
+                    "type": "number",
+                    "example": 100
+                  }
+                },
+                "required": [
+                  "visits"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "this_month_usage"
+            ]
+          }
+        },
+        "required": [
+          "site"
+        ]
+      },
+      "GetBandwidthResponse": {
+        "type": "object",
+        "properties": {
+          "site": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+              },
+              "this_month_usage": {
+                "type": "object",
+                "properties": {
+                  "bandwidth": {
+                    "type": "number",
+                    "example": 100
+                  }
+                },
+                "required": [
+                  "bandwidth"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "this_month_usage"
+            ]
+          }
+        },
+        "required": [
+          "site"
+        ]
+      },
+      "GetCdnBandwidthResponse": {
+        "type": "object",
+        "properties": {
+          "site": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+              },
+              "this_month_cdn_usage": {
+                "type": "object",
+                "properties": {
+                  "bandwidth": {
+                    "type": "number",
+                    "example": 100
+                  }
+                },
+                "required": [
+                  "bandwidth"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "this_month_cdn_usage"
+            ]
+          }
+        },
+        "required": [
+          "site"
+        ]
+      },
+      "Analytics-Cdn-Bandwidth-Response": {
+        "type": "object",
+        "properties": {
+          "analytics": {
+            "type": "object",
+            "properties": {
+              "analytics_response": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "example": "cdn-bandwidth"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "cdn-bandwidth"
+                        },
+                        "total": {
+                          "type": "number",
+                          "example": 1000
+                        },
+                        "dataset": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "example": "2025-10-28T00:00:00"
+                              },
+                              "value": {
+                                "type": "string",
+                                "example": "1000"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "value"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "total",
+                        "dataset"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "key",
+                  "data"
+                ]
+              }
+            },
+            "required": [
+              "analytics_response"
+            ]
+          }
+        },
+        "required": [
+          "analytics"
+        ]
+      },
+      "Analytics-Params": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "Analytics-Query": {
+        "type": "object",
+        "properties": {
+          "time_span": {
+            "type": "string",
+            "enum": [
+              "24_hours",
+              "7_days",
+              "30_days",
+              "60_days"
+            ],
+            "default": "7_days",
+            "example": "30_days"
+          },
+          "company_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2025-10-20"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2025-10-30"
+          }
+        },
+        "required": [
+          "company_id"
+        ]
+      },
+      "Analytics-Visits-Response": {
+        "type": "object",
+        "properties": {
+          "analytics": {
+            "type": "object",
+            "properties": {
+              "analytics_response": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "example": "uniqueip"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "uniqueip"
+                        },
+                        "total": {
+                          "type": "number",
+                          "example": 1000
+                        },
+                        "dataset": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "example": "2025-10-28T00:00:00"
+                              },
+                              "value": {
+                                "type": "string",
+                                "example": "1000"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "value"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "total",
+                        "dataset"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "key",
+                  "data"
+                ]
+              }
+            },
+            "required": [
+              "analytics_response"
+            ]
+          }
+        },
+        "required": [
+          "analytics"
+        ]
+      },
+      "Analytics-Bandwidth-Response": {
+        "type": "object",
+        "properties": {
+          "analytics": {
+            "type": "object",
+            "properties": {
+              "analytics_response": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "example": "bandwidth"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "bandwidth"
+                        },
+                        "total": {
+                          "type": "number",
+                          "example": 1000
+                        },
+                        "dataset": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "example": "2025-10-28T00:00:00"
+                              },
+                              "value": {
+                                "type": "string",
+                                "example": "1000"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "value"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "total",
+                        "dataset"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "key",
+                  "data"
+                ]
+              }
+            },
+            "required": [
+              "analytics_response"
+            ]
+          }
+        },
+        "required": [
+          "analytics"
+        ]
+      },
+      "DiskSpace-Query": {
+        "type": "object",
+        "properties": {
+          "time_span": {
+            "type": "string",
+            "enum": [
+              "7_days",
+              "30_days",
+              "60_days"
+            ],
+            "default": "7_days",
+            "example": "30_days"
+          },
+          "company_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          },
+          "time_zone": {
+            "type": "string",
+            "pattern": "^-?(0[0-9]|1[0-4]):00$",
+            "example": "02:00"
+          },
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2025-10-20"
+          },
+          "to": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2025-10-30"
+          }
+        },
+        "required": [
+          "company_id",
+          "time_zone"
+        ]
+      },
+      "Analytics-Disk-Space-Response": {
+        "type": "object",
+        "properties": {
+          "analytics": {
+            "type": "object",
+            "properties": {
+              "analytics_response": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "example": "diskSpaceUsage"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "diskSpaceUsage"
+                        },
+                        "total": {
+                          "type": "number",
+                          "example": 1000
+                        },
+                        "dataset": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "example": "2025-10-28T00:00:00"
+                              },
+                              "value": {
+                                "type": "string",
+                                "example": "1000"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "value"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "total",
+                        "dataset"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "key",
+                  "data"
+                ]
+              }
+            },
+            "required": [
+              "analytics_response"
+            ]
+          }
+        },
+        "required": [
+          "analytics"
+        ]
+      },
+      "runWPCLICommand-ParamsSchema": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "runWPCLICommand-Body": {
+        "type": "object",
+        "properties": {
+          "wp_command": {
+            "type": "string",
+            "maxLength": 5000,
+            "pattern": "^wp\\s+[a-zA-Z0-9_\\-./:=@'\\s]+$",
+            "example": "wp core version"
+          }
+        },
+        "required": [
+          "wp_command"
+        ]
+      },
+      "runWPCLICommand-Response": {
+        "type": "object",
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "example": "environment:run-wp-cli-command-54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          },
+          "message": {
+            "type": "string",
+            "example": "Running a WP CLI command in progress"
+          },
+          "status": {
+            "type": "number",
+            "example": 202
+          }
+        },
+        "required": [
+          "message",
+          "status"
+        ]
+      },
+      "generatePhpMyAdminLoginLink-ParamsSchema": {
+        "type": "object",
+        "properties": {
+          "env_id": {
+            "type": "string",
+            "example": "54fb80af-576c-4fdc-ba4f-b596c83f15a1"
+          }
+        },
+        "required": [
+          "env_id"
+        ]
+      },
+      "generatePhpMyAdminLoginLink-PreGqlResponseSchema": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "object",
+            "properties": {
+              "mysqlEditorDomain": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            },
+            "required": [
+              "mysqlEditorDomain"
+            ]
+          }
+        },
+        "required": [
+          "environment"
+        ]
+      },
+      "generatePhpMyAdminLoginLink-MainGqlResponseSchema": {
+        "type": "object",
+        "properties": {
+          "app_key": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string",
+                "example": "4e8d3c9e7b9f4d2a87f1e27c0f61b2fa8f4a15de4e25c9f1f81ad0b2d0ef3c1a"
+              },
+              "expires_at": {
+                "type": "number",
+                "example": 1736914230000
+              }
+            },
+            "required": [
+              "token",
+              "expires_at"
+            ]
+          }
+        },
+        "required": [
+          "app_key"
+        ]
+      },
+      "generatePhpMyAdminLoginLink-Response": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "https://mysqleditor-mysite.kinsta.cloud?app-key=4e8d3c9e7b9f4d2a87f1e27c0f61b2fa8f4a15de4e25c9f1f81ad0b2d0ef3c1a"
+          },
+          "expires_at": {
+            "type": "number",
+            "example": 1736914230000
+          }
+        },
+        "required": [
+          "url",
+          "expires_at"
         ]
       },
       "ValidateAPIKeyResponse": {
@@ -14474,7 +17470,9 @@
       "name": "Company",
       "tags": [
         "Company Users",
-        "Available Regions"
+        "Available Regions",
+        "API Keys",
+        "Activity Logs"
       ]
     },
     {
@@ -14494,6 +17492,7 @@
         "WordPress Edge Caching",
         "WordPress CDN",
         "Additional SFTP Users",
+        "Analytics",
         "Backups",
         "Logs"
       ]
