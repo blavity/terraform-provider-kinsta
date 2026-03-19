@@ -489,19 +489,19 @@ func TestPollOperation_404GracePeriod(t *testing.T) {
 
 Before merging polling code:
 
-- [ ] 404 grace period implemented (6 attempts × 5s)
+- [x] 404 grace period implemented (6 attempts × 5s)
 - [ ] Exponential backoff implemented (2s → 30s cap)
-- [ ] Context cancellation checked in all wait loops
-- [ ] operation.data treated as opaque
-- [ ] Lookup-after-poll strategy implemented for sites
-- [ ] Before/after comparison implemented for environments
+- [x] Context cancellation checked in all wait loops
+- [x] operation.data treated as opaque
+- [x] Lookup-after-poll strategy implemented for sites
+- [x] Before/after comparison implemented for environments
 - [ ] Progress logging via terraform-plugin-log
 - [ ] Error messages include operation_id
-- [ ] Unit tests cover all error cases
+- [x] Unit tests cover all error cases
 - [ ] Unit tests verify retry schedule
-- [ ] Acceptance tests verify end-to-end operation
+- [x] Acceptance tests verify end-to-end operation
 - [ ] Documentation updated with timeout configuration
-- [ ] display_name uniqueness constraint documented
+- [x] display_name uniqueness constraint documented
 
 ---
 

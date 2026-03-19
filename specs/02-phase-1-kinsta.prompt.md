@@ -60,10 +60,10 @@ Stabilize existing WordPress resources and deprecate kinsta_database before impl
 - Build succeeds: `go build`
 
 ## Success Criteria
-- [ ] kinsta_database has deprecation warning in description and docs
-- [ ] kinsta_wordpress_site has all 4 missing schema fields
-- [ ] specs/20-kinsta-wordpress-site-resource.md exists
-- [ ] specs/21-kinsta-wordpress-environment-resource.md exists
-- [ ] docs/resources/wordpress_environment.md exists
-- [ ] examples/wordpress_environment/main.tf exists
-- [ ] All tests pass
+- [x] kinsta_database has deprecation warning in description and docs
+- [x] kinsta_wordpress_site has all 4 missing schema fields
+- [x] specs/20-kinsta-wordpress-site-resource.md exists
+- [x] specs/21-kinsta-wordpress-environment-resource.md exists
+- [x] docs/resources/wordpress_environment.md exists
+- [x] examples/wordpress_environment/main.tf exists
+- [x] All tests pass

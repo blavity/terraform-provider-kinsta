@@ -274,8 +274,8 @@ Based on overlap with Kinsta provider scope:
 ## Success Criteria
 
 **Phase 0 complete when:**
-- [ ] Deprecation warnings added to kinsta_database
-- [ ] Migration guide published
+- [x] Deprecation warnings added to kinsta_database
+- [x] Migration guide published
 - [ ] Users notified via changelog
 
 **Phase 1 complete when:**
