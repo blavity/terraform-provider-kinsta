@@ -47,11 +47,15 @@ Rules:
 | `go vet ./...` | Static analysis |
 | `go build ./...` | Compile |
 | `go test ./internal/...` | Unit tests (no network required) |
+| `golangci-lint run ./...` | Full lint suite (errcheck, staticcheck, gocritic, etc.) |
 | `TF_ACC=1 go test ./internal/provider/ -v` | Acceptance tests (requires live credentials) |
 | `go mod tidy` | Sync go.sum after dependency changes |
 
-**Always run `go vet ./... && go build ./... && go test ./internal/...` before
-proposing a PR.** Never open a PR that fails CI.
+`golangci-lint` is enforced by a pre-commit hook (`.pre-commit-config.yaml`).
+Zero issues is required — never add `//nolint` without a reason comment.
+
+**Always run `go vet ./... && go build ./... && go test ./internal/... && golangci-lint run ./...`
+before proposing a PR.** Never open a PR that fails CI.
 
 ## Commit format
 
@@ -67,7 +71,7 @@ Commits without a valid scope break release automation.
 
 ## Before opening a PR
 
-1. `go vet ./... && go build ./... && go test ./internal/...` passes cleanly.
+1. `go vet ./... && go build ./... && go test ./internal/... && golangci-lint run ./...` passes cleanly.
 2. Compliance Statement in the PR description — list each affected principle
    and confirm compliance or document a justified exception (required, not
    advisory).
