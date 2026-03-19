@@ -23,10 +23,10 @@ builds:
 
 archives:
   - format: zip
-    name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
-  name_template: "{{ .ProjectName }}_v{{ .Version }}_SHA256SUMS"
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
 
 signs:
   - cmd: gpg
@@ -44,16 +44,12 @@ signs:
       - "${artifact}"
 
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
-
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+  version_template: "{{ incpatch .Version }}-next"
 
 release:
+  # release-please creates the GitHub Release with changelog notes;
+  # goreleaser appends the built artifacts without overwriting them.
+  mode: append
   github:
     owner: blavity
     name: terraform-provider-kinsta

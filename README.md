@@ -76,7 +76,7 @@ See `docs/resources/` for complete resource documentation:
 
 ## Development
 
-Requirements: Go 1.25+
+Requirements: Go 1.25+, [golangci-lint](https://golangci-lint.run/welcome/install/) v2+
 
 ```bash
 # Build
@@ -85,13 +85,21 @@ go build ./...
 # Unit tests
 go test ./internal/...
 
-# Acceptance tests (requires live credentials)
+# Lint
+golangci-lint run ./...
+
+# Acceptance tests (requires live Kinsta credentials)
 TF_ACC=1 go test ./internal/provider/ -v
+
+# Regenerate docs (requires tfplugindocs)
+go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+tfplugindocs generate --provider-name kinsta
 ```
 
-Dev override (no registry):
+Dev override (use a local build without the registry):
 
 ```hcl
+# ~/.terraformrc
 provider_installation {
   dev_overrides {
     "blavity/kinsta" = "/path/to/terraform-provider-kinsta"
@@ -100,7 +108,16 @@ provider_installation {
 }
 ```
 
-See `KEYS.md` for Terraform Registry publication instructions.
+## Releasing
+
+Releases are automated via [release-please](https://github.com/googleapis/release-please) and [GoReleaser](https://goreleaser.com/):
+
+1. Merge conventional commits to `main` — release-please opens a release PR.
+2. Merge the release PR — release-please creates a tag (e.g., `v0.1.0`) and a GitHub Release.
+3. The tag triggers the release workflow, which builds multi-platform binaries and signs them with GPG.
+4. The [Terraform Registry](https://registry.terraform.io) picks up the release automatically.
+
+Required repository secrets: `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`.
 
 ## Trademarks
 
