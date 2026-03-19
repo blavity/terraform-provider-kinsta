@@ -104,6 +104,10 @@ provider_installation {
 
 See `KEYS.md` for Terraform Registry publication instructions.
 
+## Trademarks
+
+Kinsta, MyKinsta, and WordPress are trademarks or registered trademarks of their respective owners. Blavity, Inc. is not affiliated with, endorsed by, or sponsored by Kinsta Ltd. or Automattic Inc. All other trademarks are the property of their respective owners.
+
 ## License
 
 Internal use only — Blavity Inc.
