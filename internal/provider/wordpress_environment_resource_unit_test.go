@@ -576,3 +576,42 @@ func Test_resourceWordPressEnvironmentCreate_RequestValidation(t *testing.T) {
 		assert.Equal(t, "en_US", capturedRequest.WPLanguage)
 	})
 }
+
+func Test_resourceWordPressEnvironmentImport(t *testing.T) {
+	t.Run("valid import ID", func(t *testing.T) {
+		mockClient := &mockWordPressEnvironmentKinstaClient{
+			getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+				return &client.GetWordPressSiteResponse{
+					Site: client.WordPressSite{
+						ID: siteID,
+						Environments: []client.WordPressEnvironment{
+							{ID: "test-env-id", Name: "staging", DisplayName: "Staging"},
+						},
+					},
+				}, nil
+			},
+		}
+
+		d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{
+			"site_id": "test-site-id",
+		})
+		d.SetId("test-site-id:test-env-id")
+
+		results, err := resourceWordPressEnvironmentImport(context.Background(), d, mockClient)
+		require.NoError(t, err)
+		require.Len(t, results, 1)
+		assert.Equal(t, "test-env-id", results[0].Id())
+		assert.Equal(t, "test-site-id", results[0].Get("site_id"))
+	})
+
+	t.Run("invalid import ID format", func(t *testing.T) {
+		mockClient := &mockWordPressEnvironmentKinstaClient{}
+
+		d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{})
+		d.SetId("invalid-no-colon")
+
+		_, err := resourceWordPressEnvironmentImport(context.Background(), d, mockClient)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid import ID format")
+	})
+}
