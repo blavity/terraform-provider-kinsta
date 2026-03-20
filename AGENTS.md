@@ -69,6 +69,20 @@ Valid scopes: `provider`, `client`, `wordpress-site`, `wordpress-environment`,
 
 Commits without a valid scope break release automation.
 
+## Every change requires a pull request
+
+**Never commit directly to `main`.** All changes — including small fixes,
+doc updates, and constitution-driven corrections — MUST go through a PR.
+
+Workflow:
+1. Create a feature branch: `git checkout -b fix/description` or `feat/description`.
+2. Make changes, commit with a scoped conventional commit message.
+3. Push and open a PR: `git push -u origin <branch> && gh pr create ...`.
+4. Wait for human approval before merging.
+
+There are no exceptions for "quick" or "trivial" changes. A direct push to
+`main` is a process violation regardless of change size.
+
 ## Before opening a PR
 
 1. `go vet ./... && go build ./... && go test ./internal/... && golangci-lint run ./...` passes cleanly.
