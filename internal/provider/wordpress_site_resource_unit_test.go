@@ -312,11 +312,22 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	resource := resourceWordPressSite()
 
 	t.Run("required fields are marked as required", func(t *testing.T) {
-		requiredFields := []string{"display_name", "region", "admin_email", "admin_password", "admin_user", "site_title"}
+		requiredFields := []string{"display_name"}
 		for _, field := range requiredFields {
 			fieldSchema, ok := resource.Schema[field]
 			assert.True(t, ok, "Field %s should exist in schema", field)
 			assert.True(t, fieldSchema.Required, "Field %s should be required", field)
+		}
+	})
+
+	t.Run("write-only fields are optional+computed with DiffSuppressFunc", func(t *testing.T) {
+		writeOnlyFields := []string{"region", "admin_email", "admin_password", "admin_user", "site_title"}
+		for _, field := range writeOnlyFields {
+			fieldSchema, ok := resource.Schema[field]
+			assert.True(t, ok, "Field %s should exist in schema", field)
+			assert.True(t, fieldSchema.Optional, "Field %s should be optional", field)
+			assert.True(t, fieldSchema.Computed, "Field %s should be computed", field)
+			assert.NotNil(t, fieldSchema.DiffSuppressFunc, "Field %s should have DiffSuppressFunc", field)
 		}
 	})
 

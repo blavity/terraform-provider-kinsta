@@ -30,44 +30,68 @@ func resourceWordPressSite() *schema.Resource {
 				ForceNew:    true,
 				Description: "A human-readable name for the site shown in MyKinsta (e.g., `my-production-site`).",
 			},
+			// Write-only fields: sent on creation but not returned by the Kinsta API.
+			// Marked Optional+Computed so import works (state will be empty after import;
+			// subsequent plans will show a diff only if the config value differs from "").
 			"region": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				ForceNew:    true,
-				Description: "Data center region where the site is hosted (e.g., `us-central1`, `europe-west1`). See the [Kinsta API docs](https://api-docs.kinsta.com) for the full list of supported regions.",
+				Description: "Data center region where the site is hosted (e.g., `us-central1`, `europe-west1`). See the [Kinsta API docs](https://api-docs.kinsta.com) for the full list of supported regions. Write-only: not returned by the API after creation.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return old != ""
+				},
 			},
+			"admin_email": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Sensitive:   true,
+				ForceNew:    true,
+				Description: "Email address for the WordPress admin account. Write-only: not returned by the API after creation.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return old != ""
+				},
+			},
+			"admin_password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Sensitive:   true,
+				ForceNew:    true,
+				Description: "Password for the WordPress admin account. Write-only: not returned by the API after creation.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return old != ""
+				},
+			},
+			"admin_user": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Username for the WordPress admin account. Write-only: not returned by the API after creation.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return old != ""
+				},
+			},
+			"site_title": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "WordPress site title displayed in the browser tab and site header. Write-only: not returned by the API after creation.",
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					return old != ""
+				},
+			},
+			// Optional fields with defaults (safe after import)
 			"install_mode": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "new",
 				ForceNew:    true,
 				Description: "WordPress installation mode. Currently only `new` is supported.",
-			},
-			"admin_email": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Sensitive:   true,
-				ForceNew:    true,
-				Description: "Email address for the WordPress admin account.",
-			},
-			"admin_password": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Sensitive:   true,
-				ForceNew:    true,
-				Description: "Password for the WordPress admin account.",
-			},
-			"admin_user": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Username for the WordPress admin account.",
-			},
-			"site_title": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "WordPress site title displayed in the browser tab and site header.",
 			},
 			"wp_language": {
 				Type:        schema.TypeString,
@@ -153,6 +177,21 @@ func resourceWordPressSiteCreate(ctx context.Context, d *schema.ResourceData, m 
 
 	// Set the site_id as the Terraform resource ID
 	d.SetId(siteID)
+
+	// Explicitly persist write-only fields — the API does not return these, so they
+	// must be saved from the request before Read is called (which would otherwise
+	// leave them empty in state for Optional+Computed fields).
+	for k, v := range map[string]interface{}{
+		"region":         req.Region,
+		"admin_email":    req.AdminEmail,
+		"admin_password": req.AdminPassword,
+		"admin_user":     req.AdminUser,
+		"site_title":     req.SiteTitle,
+	} {
+		if err := d.Set(k, v); err != nil {
+			return diag.FromErr(err)
+		}
+	}
 
 	// Read the site to populate computed attributes
 	return resourceWordPressSiteRead(ctx, d, m)

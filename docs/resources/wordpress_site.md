@@ -32,18 +32,18 @@ resource "kinsta_wordpress_site" "example" {
 
 ### Required
 
-- `admin_email` (String, Sensitive) Email address for the WordPress admin account.
-- `admin_password` (String, Sensitive) Password for the WordPress admin account.
-- `admin_user` (String) Username for the WordPress admin account.
 - `display_name` (String) A human-readable name for the site shown in MyKinsta (e.g., `my-production-site`).
-- `region` (String) Data center region where the site is hosted (e.g., `us-central1`, `europe-west1`). See the [Kinsta API docs](https://api-docs.kinsta.com) for the full list of supported regions.
-- `site_title` (String) WordPress site title displayed in the browser tab and site header.
 
 ### Optional
 
+- `admin_email` (String, Sensitive) Email address for the WordPress admin account. Write-only: not returned by the API after creation.
+- `admin_password` (String, Sensitive) Password for the WordPress admin account. Write-only: not returned by the API after creation.
+- `admin_user` (String) Username for the WordPress admin account. Write-only: not returned by the API after creation.
 - `install_mode` (String) WordPress installation mode. Currently only `new` is supported.
 - `is_multisite` (Boolean) Enable WordPress Multisite. Cannot be read back from the API after creation.
 - `is_subdomain_multisite` (Boolean) Use subdomain-based multisite instead of subdirectory multisite. Only applies when `is_multisite` is `true`. Cannot be read back from the API after creation.
+- `region` (String) Data center region where the site is hosted (e.g., `us-central1`, `europe-west1`). See the [Kinsta API docs](https://api-docs.kinsta.com) for the full list of supported regions. Write-only: not returned by the API after creation.
+- `site_title` (String) WordPress site title displayed in the browser tab and site header. Write-only: not returned by the API after creation.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `woocommerce` (Boolean) Pre-install the WooCommerce plugin. Cannot be read back from the API after creation.
 - `wordpressseo` (Boolean) Pre-install the Yoast SEO plugin. Cannot be read back from the API after creation.
