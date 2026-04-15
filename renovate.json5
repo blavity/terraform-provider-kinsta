@@ -9,6 +9,11 @@
       // Group Go module updates
       matchManagers: ["gomod"],
       groupName: "go-modules",
+    },
+    {
+      // Group Terraform provider updates
+      matchManagers: ["terraform"],
+      groupName: "terraform-providers",
     }
   ]
 }
