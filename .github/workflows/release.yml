@@ -22,7 +22,10 @@ name: Release
 on:
   push:
     tags:
-      - "v*.*.*"
+      # Match every semver tag pushed by release-please, including
+      # prereleases like `v0.0.1-rc.1`. Matches hashicorp/terraform-provider-
+      # scaffolding-framework's canonical pattern.
+      - "v*"
   workflow_dispatch:
 
 permissions:

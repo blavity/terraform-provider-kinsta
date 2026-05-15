@@ -19,16 +19,21 @@ The release flow is the canonical pattern from
 On the maintainer's workstation:
 
 ```bash
+# Set this to the address that will appear publicly on the GPG UID baked
+# into your signed releases (typically a role mailbox, not a personal one).
+# The same address is what shows up on the Terraform Registry's key page.
+RELEASE_EMAIL="releases@your-org.example"
+
 gpg --full-generate-key
 # Choose: (1) RSA and RSA
 # Keysize:  4096
 # Validity: 0 (does not expire — rotate manually if compromised)
 # Real name: terraform-provider-kinsta release signing
-# Email:    your-org's release identity
+# Email:    use the same value as $RELEASE_EMAIL above
 # Passphrase: pick a strong one; you'll store it as a repo secret
 
 # Export both halves.
-gpg --armor --export   "$RELEASE_EMAIL" > public.asc
+gpg --armor --export "$RELEASE_EMAIL" > public.asc
 gpg --armor --export-secret-keys "$RELEASE_EMAIL" > private.asc
 ```
 
