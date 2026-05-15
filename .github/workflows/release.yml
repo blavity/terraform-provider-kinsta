@@ -73,18 +73,17 @@ jobs:
           cat > ~/.gnupg/gpg-agent.conf <<'EOF'
           allow-loopback-pinentry
           default-cache-ttl 600
-          scdaemon-program /usr/lib/gnupg-pkcs11-scd
+          scdaemon-program /usr/bin/gnupg-pkcs11-scd
           EOF
 
-          # gnupg-pkcs11-scd: point at libkmsp11 and the KMS key version.
-          # ${KMS_KEY_RESOURCE} is expanded from the env block (secret).
-          cat > ~/.gnupg/gnupg-pkcs11-scd.conf <<EOF
-          module: /opt/libkmsp11/libkmsp11.so
-          provider: libkmsp11
-          nss_init: none
-          slot: 0
-          pkcs11:token-label: kms-provider-signing
-          provider-privkey: ${KMS_KEY_RESOURCE}
+          # gnupg-pkcs11-scd uses whitespace-separated directives, NOT YAML.
+          # Valid directives: providers, provider-<name>-library, log-file, verbose.
+          # See: https://manpages.debian.org/testing/gnupg-pkcs11-scd/gnupg-pkcs11-scd.1.en.html
+          cat > ~/.gnupg/gnupg-pkcs11-scd.conf <<'EOF'
+          providers kmsp11
+          provider-kmsp11-library /opt/libkmsp11/libkmsp11.so
+          log-file /tmp/gnupg-pkcs11-scd.log
+          verbose
           EOF
           chmod 600 ~/.gnupg/gpg-agent.conf ~/.gnupg/gnupg-pkcs11-scd.conf
 
@@ -92,31 +91,63 @@ jobs:
           # `key_ring` is derived from KMS_KEY_RESOURCE by stripping the
           # `/cryptoKeys/<name>/cryptoKeyVersions/<n>` suffix.
           key_ring="${KMS_KEY_RESOURCE%/cryptoKeys/*}"
+          # `generate_certs: true` is required so SCD LEARN can enumerate keys
+          # via cert objects (libkmsp11 default is false).
           cat > ~/.gnupg/kmsp11.yaml <<EOF
           ---
           tokens:
             - key_ring: "${key_ring}"
               label: "kms-provider-signing"
+          generate_certs: true
           log_directory: "/tmp"
           EOF
           chmod 600 ~/.gnupg/kmsp11.yaml
           echo "KMS_PKCS11_CONFIG=$HOME/.gnupg/kmsp11.yaml" >> "$GITHUB_ENV"
           export KMS_PKCS11_CONFIG="$HOME/.gnupg/kmsp11.yaml"
 
-          # Trigger PKCS#11 discovery of the KMS key through gpg-agent.
+          # Reset and (belt-and-suspenders) explicitly launch gpg-agent so the
+          # socket exists before we issue SCD LEARN.
           gpgconf --kill all || true
-          gpg --card-status || true
+          gpgconf --launch gpg-agent
 
-          # Capture the keyid that libkmsp11 surfaced and pin it as the default
-          # signing key so goreleaser's `gpg --detach-sign` Just Works.
+          # Surface the KMS-backed key to scdaemon and extract its keygrip.
+          # gnupg-pkcs11-scd's SCD LEARN returns one or more KEYPAIRINFO/KEY-FRIEDNLY lines;
+          # we take the second whitespace field of whichever appears first.
+          keygrip=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
+            | awk '/KEY-FRIEDNLY|KEYPAIRINFO/ {print $2; exit}')
+          if [ -z "${keygrip}" ]; then
+            echo "ERROR: gnupg-pkcs11-scd surfaced no key. Diagnostics:" >&2
+            cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null || true
+            gpg-connect-agent "SCD LEARN --force" /bye 2>&1 || true
+            echo "Check: (1) libkmsp11 loaded, (2) kmsp11.yaml correct, (3) IAM perms (cloudkms.viewer on keyring)" >&2
+            exit 1
+          fi
+          echo "Surfaced keygrip: ${keygrip}"
+
+          # Wrap the smartcard key in an OpenPGP identity so gpg --detach-sign can find it.
+          # Option 13 = "Existing key from keygrip" (gpg --expert).
+          # Inputs in order: 13 | <keygrip> | 0 (no expiry) | y (no expiry confirm)
+          #   | "terraform-provider-kinsta release signing" (Real name) | releases@blavity.com (email)
+          #   | <empty> (no comment) | O (Okay to confirm UID)
+          gpg --batch --expert --command-fd 0 --pinentry-mode loopback --full-generate-key <<EOF
+          13
+          ${keygrip}
+          0
+          y
+          terraform-provider-kinsta release signing
+          releases@blavity.com
+
+          O
+          EOF
+
           keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
             | awk -F: '/^pub:/ {print $5; exit}')
           if [ -z "${keyid}" ]; then
-            echo "ERROR: no GPG key surfaced via libkmsp11 — check KMS_KEY_RESOURCE / WIF auth" >&2
+            echo "ERROR: GPG key not registered after --full-generate-key" >&2
             gpg --list-keys || true
             exit 1
           fi
-          echo "Using KMS-backed GPG key: ${keyid}"
+          echo "Registered KMS-backed GPG key: ${keyid}"
           echo "default-key ${keyid}" >> ~/.gnupg/gpg.conf
           chmod 600 ~/.gnupg/gpg.conf
 
