@@ -1,0 +1,93 @@
+# Governance Workflow
+#
+# Purpose
+#   Validate Architecture Decision Records (ADRs) on every pull request.
+#   Checks that numbered ADR files (docs/adr/NNNN-*.md) have the required
+#   headings and a valid status value.
+#
+# Scope
+#   This workflow is intentionally SELF-CONTAINED. It does not depend on any
+#   external reusable workflow or organization-private infrastructure, in
+#   keeping with Principle IX (Organizational Information Confidentiality)
+#   of this repository's constitution.
+#
+# ADR guide: see docs/governance/adr-guide.md
+# ADR template: see docs/adr/template.md
+
+name: Governance
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    name: Lint ADRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Validate ADR format
+        env:
+          # Set to "true" to fail the job on any violation. Default is warn-only
+          # while the ADR backlog is being established.
+          FAIL_ON_VIOLATIONS: "false"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REQUIRED_HEADINGS=("## Context" "## Decision" "## Consequences")
+          VALID_STATUSES=("Proposed" "Accepted" "Deprecated" "Superseded")
+          VIOLATIONS=0
+          ADR_COUNT=0
+
+          if [[ ! -d docs/adr ]]; then
+            echo "::notice::No docs/adr/ directory found — skipping ADR lint."
+            exit 0
+          fi
+
+          while IFS= read -r -d '' file; do
+            # Skip template
+            [[ "$(basename "$file")" == "template.md" ]] && continue
+            ADR_COUNT=$((ADR_COUNT + 1))
+            FILE_VIOLATIONS=0
+
+            # Check required headings
+            for heading in "${REQUIRED_HEADINGS[@]}"; do
+              if ! grep -qF "$heading" "$file"; then
+                echo "::warning file=${file}::Missing required heading: ${heading}"
+                FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+              fi
+            done
+
+            # Check status line
+            STATUS=$(grep -m1 '^\*\*Status\*\*:' "$file" | sed 's/\*\*Status\*\*:[[:space:]]*//' | awk '{print $1}') || true
+            if [[ -z "$STATUS" ]]; then
+              echo "::warning file=${file}::Missing **Status**: line"
+              FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+            else
+              VALID=0
+              for s in "${VALID_STATUSES[@]}"; do
+                [[ "$STATUS" == "$s" ]] && VALID=1 && break
+              done
+              if [[ $VALID -eq 0 ]]; then
+                echo "::warning file=${file}::Invalid status '${STATUS}'. Must be one of: ${VALID_STATUSES[*]}"
+                FILE_VIOLATIONS=$((FILE_VIOLATIONS + 1))
+              fi
+            fi
+
+            VIOLATIONS=$((VIOLATIONS + FILE_VIOLATIONS))
+          done < <(find docs/adr -maxdepth 1 -name '[0-9][0-9][0-9][0-9]-*.md' -print0 | sort -z)
+
+          echo "Checked ${ADR_COUNT} ADR(s). Violations: ${VIOLATIONS}."
+
+          if [[ $VIOLATIONS -gt 0 && "$FAIL_ON_VIOLATIONS" == "true" ]]; then
+            echo "::error::ADR lint failed with ${VIOLATIONS} violation(s). See warnings above."
+            exit 1
+          fi
