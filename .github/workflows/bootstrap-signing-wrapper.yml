@@ -1,0 +1,219 @@
+# Bootstrap Signing Wrapper (one-time maintainer setup)
+#
+# Generates the persistent OpenPGP wrapper that the Release workflow imports
+# every run. Mints `public.asc` (upload to Terraform Registry) and
+# `private.asc` (store as the GPG_PRIVATE_KEY repo secret).
+#
+# This workflow exists because the section 4a wrap recipe in KEYS.md requires
+# an ubuntu-24.04 host with libkmsp11 + gnupg-pkcs11-scd + Cloud KMS access --
+# environments not all maintainers have locally. Running this once in CI
+# produces the same artifacts a local wrap would.
+#
+# RUN EXACTLY ONCE. Each invocation produces a new OpenPGP fingerprint, so
+# re-running invalidates any previously-uploaded public key on the Terraform
+# Registry. Delete or disable this workflow file after the initial bootstrap.
+#
+# Encryption: the artifact `private.asc.age` is encrypted to the maintainer's
+# SSH public key supplied as a workflow_dispatch input. Only someone with the
+# matching SSH private key can decrypt -- workflow_dispatch inputs are visible
+# in run metadata, but SSH public keys are public by design, so visibility is
+# not a leak. (Earlier passphrase-via-input approach was flagged in PR review:
+# input values ARE visible in run metadata, so they cannot be used as secrets.)
+#
+# Post-run steps (maintainer):
+#   1. Download the `signing-wrapper` artifact from this workflow run.
+#   2. Decrypt private.asc with your SSH private key:
+#        age -d -i ~/.ssh/id_ed25519 -o private.asc private.asc.age
+#      (or any ed25519/rsa SSH key whose public half you provided as input)
+#   3. Set the repo secret:
+#        gh secret set GPG_PRIVATE_KEY \
+#          --repo blavity/terraform-provider-kinsta < private.asc
+#   4. Upload `public.asc` to https://registry.terraform.io/settings/keys
+#      (also stage it for github.com/opentofu/registry submission).
+#   5. Delete the workflow artifact from the run page (defense in depth even
+#      with short retention).
+#   6. Discard local private.asc / private.asc.age.
+
+name: Bootstrap Signing Wrapper (one-time)
+
+on:
+  workflow_dispatch:
+    inputs:
+      uid_name:
+        description: "OpenPGP UID name (appears publicly on signed releases)"
+        required: true
+        default: "terraform-provider-kinsta release signing"
+      uid_email:
+        description: "OpenPGP UID email (appears publicly on signed releases)"
+        required: true
+      ssh_pubkey:
+        description: "Maintainer's SSH public key (ed25519 or rsa). private.asc.age is encrypted to this recipient; only your matching SSH private key can decrypt. Example: 'ssh-ed25519 AAAAC3Nz...'"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  wrap:
+    runs-on: ubuntu-24.04
+    env:
+      LIBKMSP11_VERSION: "1.9"
+      LIBKMSP11_SHA256: "5397f965073cd5d1e2c43e5148f102f31a7c835902f97eb41c7c9c0f1b876a40"
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+
+      - name: Authenticate to GCP via Workload Identity Federation
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Install KMS-via-GPG signing toolchain
+        env:
+          KMS_KEY_RESOURCE: ${{ secrets.KMS_KEY_RESOURCE }}
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y gnupg gnupg-pkcs11-scd wget ca-certificates tar
+
+          tarball="libkmsp11-${LIBKMSP11_VERSION}-linux-amd64.tar.gz"
+          url="https://github.com/GoogleCloudPlatform/kms-integrations/releases/download/pkcs11-v${LIBKMSP11_VERSION}/${tarball}"
+          wget -qO "/tmp/${tarball}" "${url}"
+          echo "${LIBKMSP11_SHA256}  /tmp/${tarball}" | sha256sum -c -
+
+          sudo mkdir -p /opt/libkmsp11
+          sudo tar -xzf "/tmp/${tarball}" -C /opt/libkmsp11 --strip-components=1
+          sudo chmod 0755 /opt/libkmsp11
+          test -f /opt/libkmsp11/libkmsp11.so
+
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+
+          cat > ~/.gnupg/gpg-agent.conf <<'EOF'
+          allow-loopback-pinentry
+          default-cache-ttl 600
+          scdaemon-program /usr/bin/gnupg-pkcs11-scd
+          EOF
+
+          cat > ~/.gnupg/gnupg-pkcs11-scd.conf <<'EOF'
+          providers kmsp11
+          provider-kmsp11-library /opt/libkmsp11/libkmsp11.so
+          log-file /tmp/gnupg-pkcs11-scd.log
+          verbose
+          EOF
+          chmod 600 ~/.gnupg/gpg-agent.conf ~/.gnupg/gnupg-pkcs11-scd.conf
+
+          key_ring="${KMS_KEY_RESOURCE%/cryptoKeys/*}"
+          cat > ~/.gnupg/kmsp11.yaml <<EOF
+          ---
+          tokens:
+            - key_ring: "${key_ring}"
+              label: "kms-provider-signing"
+          generate_certs: true
+          log_directory: "/tmp"
+          EOF
+          chmod 600 ~/.gnupg/kmsp11.yaml
+          echo "KMS_PKCS11_CONFIG=$HOME/.gnupg/kmsp11.yaml" >> "$GITHUB_ENV"
+
+          gpgconf --kill all || true
+          gpgconf --launch gpg-agent
+
+      - name: Wrap KMS keygrip as a persistent OpenPGP identity
+        env:
+          UID_NAME: ${{ inputs.uid_name }}
+          UID_EMAIL: ${{ inputs.uid_email }}
+        run: |
+          set -euo pipefail
+
+          # Surface KEYPAIRINFO records. Assert exactly one — if the keyring
+          # contains multiple keys we cannot tell which one is KMS_KEY_RESOURCE
+          # without additional plumbing, and silently wrapping the wrong key
+          # would produce a wrapper that signs releases with a different KMS
+          # key than the maintainer intended.
+          keypair_lines=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
+            | awk '/^S +KEYPAIRINFO / {print}')
+          keypair_count=$(printf '%s\n' "$keypair_lines" | grep -c . || true)
+          if [ "$keypair_count" -ne 1 ]; then
+            echo "ERROR: expected exactly one KEYPAIRINFO from SCD LEARN, found ${keypair_count}." >&2
+            printf '%s\n' "$keypair_lines" >&2
+            cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null >&2 || true
+            echo "Scope kmsp11.yaml to a single CryptoKey before re-running." >&2
+            exit 1
+          fi
+          keygrip=$(printf '%s\n' "$keypair_lines" | awk '{print $3}')
+          echo "KMS keygrip: ${keygrip}"
+
+          gpg --batch --expert --command-fd 0 --pinentry-mode loopback --full-generate-key <<EOF
+          13
+          ${keygrip}
+          0
+          y
+          ${UID_NAME}
+          ${UID_EMAIL}
+
+          O
+          EOF
+
+          # Filter to the UID email we just set so any pre-existing keys on
+          # the runner image cannot be mis-selected. (CI runners are clean,
+          # but the same recipe is used in KEYS.md for local maintainer wraps
+          # where the keyring may already have unrelated keys.)
+          keyid=$(gpg --list-keys --with-colons --keyid-format LONG "${UID_EMAIL}" \
+            | awk -F: '/^pub:/ {print $5; exit}')
+          if [ -z "${keyid}" ]; then
+            echo "ERROR: no pub key matching UID ${UID_EMAIL} after wrap." >&2
+            gpg --list-keys || true
+            exit 1
+          fi
+          echo "Wrapper keyid: ${keyid}"
+
+          gpg --export --armor "${keyid}" > public.asc
+          gpg --export-secret-keys --armor "${keyid}" > private.asc
+
+          echo "--- public.asc fingerprint ---"
+          gpg --list-keys --with-fingerprint --with-colons "${keyid}" \
+            | awk -F: '/^fpr:/ {print $10; exit}'
+          echo "--- public.asc preview ---"
+          head -3 public.asc
+          tail -1 public.asc
+
+      - name: Install age (for SSH-recipient encryption)
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y age
+          age --version
+
+      - name: Encrypt private.asc to maintainer's SSH public key
+        env:
+          SSH_PUBKEY: ${{ inputs.ssh_pubkey }}
+        run: |
+          set -euo pipefail
+          # age supports ssh-ed25519 and ssh-rsa recipients natively. The
+          # recipient string is the SSH public key line, no extra format work.
+          # Validate the input looks like an SSH public key before proceeding.
+          if ! printf '%s' "$SSH_PUBKEY" | grep -Eq '^(ssh-(ed25519|rsa)|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/]+=*( .*)?$'; then
+            echo "ERROR: ssh_pubkey input does not look like an OpenSSH public key line." >&2
+            echo "Expected format: 'ssh-ed25519 AAAAC3Nz... [optional comment]'" >&2
+            exit 1
+          fi
+
+          recipient_file=$(mktemp)
+          printf '%s\n' "$SSH_PUBKEY" > "$recipient_file"
+          age --encrypt --recipients-file "$recipient_file" \
+            --output private.asc.age private.asc
+          rm -f private.asc "$recipient_file"
+
+          echo "private.asc encrypted to private.asc.age (recipient: SSH public key)"
+          ls -la public.asc private.asc.age
+
+      - name: Upload signing-wrapper artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: signing-wrapper
+          path: |
+            public.asc
+            private.asc.age
+          retention-days: 1
+          if-no-files-found: error

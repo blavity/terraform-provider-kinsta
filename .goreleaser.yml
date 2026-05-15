@@ -29,26 +29,31 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
 
 signs:
+  # Signing key is provided by Cloud KMS via libkmsp11 + gnupg-pkcs11-scd
+  # (see .github/workflows/release.yml and KEYS.md §4a). The default-key is
+  # written into ~/.gnupg/gpg.conf at workflow runtime, so no passphrase or
+  # explicit key id is needed here. `--no-tty --batch` is sufficient for
+  # headless signing against the KMS-backed key.
   - cmd: gpg
     signature: "${artifact}.sig"
     artifacts: checksum
     args:
+      - "--no-tty"
       - "--batch"
-      - "--pinentry-mode"
-      - "loopback"
-      - "--passphrase"
-      - "{{ .Env.GPG_PASSPHRASE }}"
+      - "--detach-sign"
       - "--output"
       - "${signature}"
-      - "--detach-sign"
       - "${artifact}"
 
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 release:
-  # release-please creates the GitHub Release with changelog notes;
-  # goreleaser appends the built artifacts without overwriting them.
+  # release-please creates the GitHub Release with changelog notes when the
+  # release PR is merged; goreleaser appends the signed artifacts here.
+  # If signing fails, the release-please-created release exists without
+  # artifacts — recovery is `gh release delete vX.Y.Z` then `gh workflow run
+  # release.yml --ref vX.Y.Z`. See KEYS.md sec 4a "Release recovery".
   mode: append
   github:
     owner: blavity
