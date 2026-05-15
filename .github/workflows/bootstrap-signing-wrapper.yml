@@ -126,6 +126,18 @@ jobs:
         run: |
           set -uo pipefail
 
+          echo "--- env: GCP-relevant variables ---"
+          env | grep -E "^GOOGLE_|^GCLOUD_|^CLOUDSDK_|^GCP_|^KMS_PKCS11" | sort
+          echo
+          echo "--- GOOGLE_APPLICATION_CREDENTIALS file exists + size ---"
+          ls -la "${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}" 2>&1 || echo "(env unset or file missing)"
+          echo
+          echo "--- Direct libkmsp11 test via pkcs11-tool (bypasses gpg-agent + scdaemon) ---"
+          sudo apt-get install -y opensc >/dev/null 2>&1
+          GRPC_VERBOSITY=DEBUG pkcs11-tool \
+            --module /opt/libkmsp11/libkmsp11.so \
+            --list-slots 2>&1 | head -40 || echo "(pkcs11-tool list-slots FAILED)"
+          echo
           echo "--- KMS_KEY_RESOURCE shape ---"
           echo "${KMS_KEY_RESOURCE}" | sed -E 's|/cryptoKeyVersions/.*|/cryptoKeyVersions/<n>|'
 
