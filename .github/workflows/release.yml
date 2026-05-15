@@ -8,11 +8,14 @@
 #
 # See KEYS.md §4a for the authoritative recipe.
 #
-# Required repo secrets (provisioned in blavity/platform):
+# Required repo secrets (provisioned by the host platform's KMS-backed signing infrastructure):
 #   KMS_KEY_RESOURCE     - Full Cloud KMS CryptoKeyVersion resource path
 #                          (projects/.../cryptoKeyVersions/N)
 #   WIF_PROVIDER         - Workload Identity Provider resource path
 #   WIF_SERVICE_ACCOUNT  - provider-signing@<project>.iam.gserviceaccount.com
+#   SIGNING_KEY_EMAIL    - Email address baked into the OpenPGP UID wrapped
+#                          around the KMS-backed signing key. No default;
+#                          the workflow fails fast if this secret is unset.
 
 name: Release
 
@@ -49,8 +52,19 @@ jobs:
       - name: Install KMS-via-GPG signing toolchain (libkmsp11 + gnupg-pkcs11-scd)
         env:
           KMS_KEY_RESOURCE: ${{ secrets.KMS_KEY_RESOURCE }}
+          SIGNING_KEY_EMAIL: ${{ secrets.SIGNING_KEY_EMAIL }}
         run: |
           set -euo pipefail
+
+          # Fail fast if SIGNING_KEY_EMAIL is unset — there is no safe default.
+          # The OpenPGP UID for the KMS-backed key is baked at key-wrap time
+          # (see printf below) and cannot be changed without re-running this
+          # step against a fresh keyring.
+          if [ -z "${SIGNING_KEY_EMAIL:-}" ]; then
+            echo "ERROR: SIGNING_KEY_EMAIL repo secret is not set." >&2
+            echo "Provision it before running this workflow (see header comment)." >&2
+            exit 1
+          fi
 
           sudo apt-get update
           sudo apt-get install -y gnupg gnupg-pkcs11-scd wget ca-certificates tar
@@ -127,11 +141,12 @@ jobs:
           # Wrap the smartcard key in an OpenPGP identity so gpg --detach-sign can find it.
           # Option 13 = "Existing key from keygrip" (gpg --expert).
           # Inputs in order: 13 | <keygrip> | 0 (no expiry) | y (no expiry confirm)
-          #   | "terraform-provider-kinsta release signing" (Real name) | releases@blavity.com (email)
+          #   | "terraform-provider-kinsta release signing" (Real name)
+          #   | "${SIGNING_KEY_EMAIL}" (email — sourced from repo secret, not baked)
           #   | <empty> (no comment) | O (Okay to confirm UID)
           # NOTE: piping via printf (not a heredoc) is intentional. YAML `run: |`
           # heredocs preserve leading whitespace, which gpg --command-fd rejects.
-          printf '13\n%s\n0\ny\nterraform-provider-kinsta release signing\nreleases@blavity.com\n\nO\n' "${keygrip}" \
+          printf '13\n%s\n0\ny\nterraform-provider-kinsta release signing\n%s\n\nO\n' "${keygrip}" "${SIGNING_KEY_EMAIL}" \
             | gpg --batch --expert --command-fd 0 --pinentry-mode loopback --full-generate-key
 
           keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
