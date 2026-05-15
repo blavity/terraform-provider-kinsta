@@ -1,12 +1,18 @@
 # Release Workflow
 #
 # Triggered by semver tags pushed by release-please (e.g., v0.1.0).
-# Builds multi-platform provider binaries, signs them with GPG, and
-# publishes them as a GitHub Release for the Terraform Registry to consume.
+# Builds multi-platform provider binaries, signs the SHA256SUMS checksum
+# file with a Cloud KMS HSM-backed RSA-4096 signing key via PKCS#11
+# (libkmsp11 + gnupg-pkcs11-scd), and publishes the artifacts as a
+# GitHub Release for the Terraform Registry to consume.
 #
-# Required secrets:
-#   GPG_PRIVATE_KEY  - ASCII-armored GPG private key for signing
-#   GPG_PASSPHRASE   - Passphrase for the GPG key (may be empty string)
+# See KEYS.md §4a for the authoritative recipe.
+#
+# Required repo secrets (provisioned in blavity/platform):
+#   KMS_KEY_RESOURCE     - Full Cloud KMS CryptoKeyVersion resource path
+#                          (projects/.../cryptoKeyVersions/N)
+#   WIF_PROVIDER         - Workload Identity Provider resource path
+#   WIF_SERVICE_ACCOUNT  - provider-signing@<project>.iam.gserviceaccount.com
 
 name: Release
 
@@ -17,10 +23,14 @@ on:
 
 permissions:
   contents: write
+  id-token: write # required for Workload Identity Federation
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    env:
+      LIBKMSP11_VERSION: '1.9'
+      LIBKMSP11_SHA256: '5397f965073cd5d1e2c43e5148f102f31a7c835902f97eb41c7c9c0f1b876a40'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
@@ -30,11 +40,85 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Import GPG signing key
-        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
+      - name: Authenticate to GCP via Workload Identity Federation
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Install KMS-via-GPG signing toolchain (libkmsp11 + gnupg-pkcs11-scd)
+        env:
+          KMS_KEY_RESOURCE: ${{ secrets.KMS_KEY_RESOURCE }}
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y gnupg gnupg-pkcs11-scd wget ca-certificates tar
+
+          # Download and verify libkmsp11 from GoogleCloudPlatform/kms-integrations.
+          tarball="libkmsp11-${LIBKMSP11_VERSION}-linux-amd64.tar.gz"
+          url="https://github.com/GoogleCloudPlatform/kms-integrations/releases/download/pkcs11-v${LIBKMSP11_VERSION}/${tarball}"
+          wget -qO "/tmp/${tarball}" "${url}"
+          echo "${LIBKMSP11_SHA256}  /tmp/${tarball}" | sha256sum -c -
+
+          sudo mkdir -p /opt/libkmsp11
+          sudo tar -xzf "/tmp/${tarball}" -C /opt/libkmsp11 --strip-components=1
+          sudo chmod 0755 /opt/libkmsp11
+          test -f /opt/libkmsp11/libkmsp11.so
+
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+
+          # GPG agent: delegate smartcard ops to gnupg-pkcs11-scd.
+          cat > ~/.gnupg/gpg-agent.conf <<'EOF'
+          allow-loopback-pinentry
+          default-cache-ttl 600
+          scdaemon-program /usr/lib/gnupg-pkcs11-scd
+          EOF
+
+          # gnupg-pkcs11-scd: point at libkmsp11 and the KMS key version.
+          # ${KMS_KEY_RESOURCE} is expanded from the env block (secret).
+          cat > ~/.gnupg/gnupg-pkcs11-scd.conf <<EOF
+          module: /opt/libkmsp11/libkmsp11.so
+          provider: libkmsp11
+          nss_init: none
+          slot: 0
+          pkcs11:token-label: kms-provider-signing
+          provider-privkey: ${KMS_KEY_RESOURCE}
+          EOF
+          chmod 600 ~/.gnupg/gpg-agent.conf ~/.gnupg/gnupg-pkcs11-scd.conf
+
+          # libkmsp11 reads its own YAML config via KMS_PKCS11_CONFIG. The
+          # `key_ring` is derived from KMS_KEY_RESOURCE by stripping the
+          # `/cryptoKeys/<name>/cryptoKeyVersions/<n>` suffix.
+          key_ring="${KMS_KEY_RESOURCE%/cryptoKeys/*}"
+          cat > ~/.gnupg/kmsp11.yaml <<EOF
+          ---
+          tokens:
+            - key_ring: "${key_ring}"
+              label: "kms-provider-signing"
+          log_directory: "/tmp"
+          EOF
+          chmod 600 ~/.gnupg/kmsp11.yaml
+          echo "KMS_PKCS11_CONFIG=$HOME/.gnupg/kmsp11.yaml" >> "$GITHUB_ENV"
+          export KMS_PKCS11_CONFIG="$HOME/.gnupg/kmsp11.yaml"
+
+          # Trigger PKCS#11 discovery of the KMS key through gpg-agent.
+          gpgconf --kill all || true
+          gpg --card-status || true
+
+          # Capture the keyid that libkmsp11 surfaced and pin it as the default
+          # signing key so goreleaser's `gpg --detach-sign` Just Works.
+          keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
+            | awk -F: '/^pub:/ {print $5; exit}')
+          if [ -z "${keyid}" ]; then
+            echo "ERROR: no GPG key surfaced via libkmsp11 — check KMS_KEY_RESOURCE / WIF auth" >&2
+            gpg --list-keys || true
+            exit 1
+          fi
+          echo "Using KMS-backed GPG key: ${keyid}"
+          echo "default-key ${keyid}" >> ~/.gnupg/gpg.conf
+          chmod 600 ~/.gnupg/gpg.conf
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
@@ -43,4 +127,3 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

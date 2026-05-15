@@ -29,18 +29,20 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
 
 signs:
+  # Signing key is provided by Cloud KMS via libkmsp11 + gnupg-pkcs11-scd
+  # (see .github/workflows/release.yml and KEYS.md §4a). The default-key is
+  # written into ~/.gnupg/gpg.conf at workflow runtime, so no passphrase or
+  # explicit key id is needed here. `--no-tty --batch` is sufficient for
+  # headless signing against the KMS-backed key.
   - cmd: gpg
     signature: "${artifact}.sig"
     artifacts: checksum
     args:
+      - "--no-tty"
       - "--batch"
-      - "--pinentry-mode"
-      - "loopback"
-      - "--passphrase"
-      - "{{ .Env.GPG_PASSPHRASE }}"
+      - "--detach-sign"
       - "--output"
       - "${signature}"
-      - "--detach-sign"
       - "${artifact}"
 
 snapshot:
