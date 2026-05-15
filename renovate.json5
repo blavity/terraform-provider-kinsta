@@ -1,14 +1,46 @@
 {
-  // renovate.json5 — managed by blavity/renovate-config onboarding
-  // Extends the org-wide shared preset. Add repo-specific overrides below.
-  // Preset docs: https://github.com/blavity/renovate-config
+  // Self-contained Renovate config. Disconnected from any private org preset
+  // so this public-bound repo can be cloned and contributed to by anyone
+  // without depending on private extends. See ADR-0001 (host organization
+  // baseline) and constitution Principle IX.
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["github>blavity/renovate-config"],
+  extends: [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "schedule:earlyMondays",
+    ":automergeBranch",
+    ":automergePatch",
+  ],
+  // Security vulnerability alerts bypass the schedule and auto-merge once CI passes.
+  vulnerabilityAlerts: {
+    enabled: true,
+    schedule: ["at any time"],
+    automerge: true,
+  },
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 5am on saturday"],
+    automerge: true,
+  },
   packageRules: [
     {
-      // Group Go module updates
+      // Group Go module updates into a single PR per cycle.
       matchManagers: ["gomod"],
       groupName: "go-modules",
-    }
-  ]
+      semanticCommitType: "chore",
+      semanticCommitScope: "deps",
+    },
+    {
+      // GitHub Actions must be SHA-pinned per constitution Principle VII.
+      // Renovate already pins by digest when `pinDigests: true`; group them
+      // and route under the `ci` scope per the constitution's commit-scope
+      // table.
+      matchManagers: ["github-actions"],
+      pinDigests: true,
+      groupName: "github-actions",
+      semanticCommitType: "chore",
+      semanticCommitScope: "ci",
+    },
+  ],
 }
