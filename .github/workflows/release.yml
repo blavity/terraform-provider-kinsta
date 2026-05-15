@@ -129,16 +129,10 @@ jobs:
           # Inputs in order: 13 | <keygrip> | 0 (no expiry) | y (no expiry confirm)
           #   | "terraform-provider-kinsta release signing" (Real name) | releases@blavity.com (email)
           #   | <empty> (no comment) | O (Okay to confirm UID)
-          gpg --batch --expert --command-fd 0 --pinentry-mode loopback --full-generate-key <<EOF
-          13
-          ${keygrip}
-          0
-          y
-          terraform-provider-kinsta release signing
-          releases@blavity.com
-
-          O
-          EOF
+          # NOTE: piping via printf (not a heredoc) is intentional. YAML `run: |`
+          # heredocs preserve leading whitespace, which gpg --command-fd rejects.
+          printf '13\n%s\n0\ny\nterraform-provider-kinsta release signing\nreleases@blavity.com\n\nO\n' "${keygrip}" \
+            | gpg --batch --expert --command-fd 0 --pinentry-mode loopback --full-generate-key
 
           keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
             | awk -F: '/^pub:/ {print $5; exit}')
