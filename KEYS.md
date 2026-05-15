@@ -56,7 +56,7 @@ The signing service account (`provider-signing@<project>.iam.gserviceaccount.com
 - `roles/cloudkms.signerVerifier` — sign with the key version
 - `roles/cloudkms.viewer` — `libkmsp11` calls `ListCryptoKeys` during token init; without `viewer` the token comes back empty and `SCD LEARN` returns nothing
 
-These are bound by the companion `blavity/platform` IAM PR.
+These are bound by the host platform's IAM (Cloud KMS Workload Identity Federation).
 
 ### Install + configure the signing chain
 
@@ -114,6 +114,8 @@ gpgconf --launch gpg-agent
 
 `gpg --card-status` alone does **not** make a PKCS#11-backed key visible to `gpg --detach-sign`. You must surface its keygrip via `SCD LEARN` and then create an OpenPGP wrapper identity around it using `--full-generate-key` option 13 (`Existing key from keygrip`):
 
+> The email below (`release-signing@example.com`) is a placeholder per the project's confidentiality rules. Consumers MUST substitute their actual signing UID email; CI sources this value from the `SIGNING_KEY_EMAIL` repo secret documented in §4a (no default — the workflow fails fast if it is unset).
+
 ```bash
 # 1. Surface the key + extract the keygrip.
 keygrip=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
@@ -126,7 +128,7 @@ ${keygrip}
 0
 y
 terraform-provider-kinsta release signing
-releases@blavity.com
+release-signing@example.com
 
 O
 EOF
@@ -147,7 +149,7 @@ Run locally on an `ubuntu-24.04` container, with `gcloud auth application-defaul
 
 1. Run all of the install + configure block above.
 2. `gpg-connect-agent "SCD LEARN --force" /bye` — confirm a `KEYPAIRINFO` line with a keygrip is returned. If empty, check `/tmp/gnupg-pkcs11-scd.log` and `/tmp/libkmsp11_*.log`.
-3. `gpg --list-keys` after the wrap step — confirm the new `pub` entry with the `releases@blavity.com` UID exists.
+3. `gpg --list-keys` after the wrap step — confirm the new `pub` entry with your configured signing UID email exists (the placeholder `release-signing@example.com` is used in this doc; the actual value is supplied at CI time via the `SIGNING_KEY_EMAIL` repo secret documented in §4a, and any user MUST substitute their own address).
 4. `echo test > /tmp/x && gpg --detach-sign /tmp/x` — confirm `/tmp/x.sig` is produced with no errors.
 5. `gpg --verify /tmp/x.sig /tmp/x` — confirm a GOOD signature.
 6. Optionally cross-check against the exported public key (`gpg --export --armor > /tmp/pub.asc`) by importing into a fresh keyring and re-verifying.
