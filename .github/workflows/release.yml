@@ -3,13 +3,16 @@
 # Triggered by semver tags pushed by release-please (e.g., v0.1.0).
 # Builds multi-platform provider binaries, signs the SHA256SUMS checksum
 # file with a Cloud KMS HSM-backed RSA-4096 signing key via PKCS#11
-# (libkmsp11 + gnupg-pkcs11-scd), and creates the GitHub Release for the
-# Terraform Registry to consume.
+# (libkmsp11 + gnupg-pkcs11-scd), and appends the artifacts to the GitHub
+# Release that release-please already created.
 #
-# release-please runs with `skip-github-release: true`, so this workflow
-# is responsible for creating the GitHub Release after signing succeeds.
-# This makes release publishing atomic: a signing failure leaves no
-# GitHub Release behind, only the git tag (which can be re-triggered).
+# Failure mode: if signing fails after release-please created the Release,
+# the Release exists without artifacts. Recovery:
+#   gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes
+#   gh workflow run release.yml --repo blavity/terraform-provider-kinsta \
+#     --ref vX.Y.Z
+# (the workflow_dispatch trigger below makes the re-run possible without
+# deleting and re-pushing the tag).
 #
 # See KEYS.md sec 4a for the authoritative recipe.
 #
@@ -40,6 +43,11 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  # workflow_dispatch enables manual re-runs against an existing tag, which is
+  # the recovery path when signing fails and the release-please-created
+  # GitHub Release needs to be re-populated after a fix lands on main.
+  # Use:  gh workflow run release.yml --ref vX.Y.Z
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -217,33 +225,10 @@ jobs:
           fi
           echo "Keygrip match confirmed: ${wrapper_keygrip}"
 
-      - name: Extract release notes from CHANGELOG
-        env:
-          REF_NAME: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          # release-please writes entries like `## [0.1.0](url) (2026-...)`.
-          # Strip the leading `v` from the tag to match the heading.
-          version="${REF_NAME#v}"
-          awk -v ver="$version" '
-            /^## \[/ {
-              if (in_section) exit
-              if (index($0, "[" ver "]") > 0) { in_section=1; next }
-            }
-            in_section { print }
-          ' CHANGELOG.md > /tmp/release-notes.md
-          if [ ! -s /tmp/release-notes.md ]; then
-            echo "ERROR: No release notes found for version ${version} in CHANGELOG.md" >&2
-            echo "Check that release-please's CHANGELOG entry uses a matching version heading." >&2
-            exit 1
-          fi
-          echo "--- release notes preview ---"
-          head -40 /tmp/release-notes.md
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
         with:
           version: latest
-          args: release --clean --release-notes /tmp/release-notes.md
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

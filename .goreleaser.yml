@@ -49,11 +49,12 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 release:
-  # release-please runs with `skip-github-release: true`, so the GitHub
-  # Release does NOT exist at this point — GoReleaser creates it here, after
-  # signing succeeds, so a signing failure can never leave an orphan Release.
-  # Release notes are passed via `--release-notes` from the workflow (extracted
-  # from CHANGELOG.md by the tag-triggered job).
+  # release-please creates the GitHub Release with changelog notes when the
+  # release PR is merged; goreleaser appends the signed artifacts here.
+  # If signing fails, the release-please-created release exists without
+  # artifacts — recovery is `gh release delete vX.Y.Z` then `gh workflow run
+  # release.yml --ref vX.Y.Z`. See KEYS.md sec 4a "Release recovery".
+  mode: append
   github:
     owner: blavity
     name: terraform-provider-kinsta

@@ -141,8 +141,20 @@ Instead, the maintainer wraps the keygrip once locally, exports both halves of t
 # same KMS keyring that CI will use.
 
 # 1. Surface the key + extract the keygrip.
-keygrip=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
-  | awk '/^S +KEYPAIRINFO / {print $3; exit}')
+# Capture all KEYPAIRINFO records. Assert exactly one — if the keyring
+# contains multiple keys, the wrap recipe would silently bind to whichever
+# one libkmsp11 lists first, which may not be KMS_KEY_RESOURCE. Per PR #1249
+# the platform keyring is isolated per CryptoKey, so this should always hold.
+keypair_lines=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
+  | awk '/^S +KEYPAIRINFO / {print}')
+keypair_count=$(printf '%s\n' "$keypair_lines" | grep -c . || true)
+if [ "$keypair_count" -ne 1 ]; then
+  echo "ERROR: expected exactly one KEYPAIRINFO from SCD LEARN, found ${keypair_count}." >&2
+  printf '%s\n' "$keypair_lines" >&2
+  echo "Scope kmsp11.yaml to a single CryptoKey or isolate the keyring before wrapping." >&2
+  exit 1
+fi
+keygrip=$(printf '%s\n' "$keypair_lines" | awk '{print $3}')
 # Note: SCD LEARN status lines have the form `S KEYPAIRINFO <keygrip> ...`,
 # so the keygrip is field 3 (after the `S` status prefix and the record name).
 
@@ -158,8 +170,10 @@ release-signing@example.com
 O
 EOF
 
-# 3. Identify the wrapper keyid.
+# 3. Identify the wrapper keyid — filter by the UID email you just set so
+# pre-existing keys on a maintainer workstation cannot be mis-selected.
 keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
+  "release-signing@example.com" \
   | awk -F: '/^pub:/ {print $5; exit}')
 
 # 4. Export both halves of the wrapper.
@@ -191,7 +205,21 @@ Run locally on an `ubuntu-24.04` container, with `gcloud auth application-defaul
 6. Cross-check by importing the exported `public.asc` into a fresh keyring and re-verifying.
 7. **Re-import the exported `private.asc` into a fresh keyring** and confirm the resulting `pub` fingerprint is identical to step 3. This proves the wrapper persists a stable identity across imports, which is the property the CI workflow relies on.
 
-**Release atomicity**: release-please owns versioning, CHANGELOG, and tag creation; GoReleaser owns building, signing, and publishing the GitHub Release. release-please is configured with `skip-github-release: true`, so a tag push lands on a repo with no GitHub Release for that version yet. The release.yml workflow extracts the new version's CHANGELOG section, runs the KMS-via-PKCS11 signing chain, then has GoReleaser create the GitHub Release with the signed artifacts and the extracted notes. If any step before GoReleaser fails — signing-chain setup, sanity check, GoReleaser build — no GitHub Release is published and there are no orphaned artifacts to clean up. The git tag remains, so retrying after a fix is just re-pushing the tag (or `gh workflow run release.yml --ref vX.Y.Z`).
+**Release flow + recovery**: release-please owns versioning, CHANGELOG, tag creation, and the initial GitHub Release. The tag push triggers `release.yml`, which runs the KMS-via-PKCS11 signing chain and has GoReleaser **append** the signed artifacts to the existing Release (`release.mode: append`). If signing fails after the tag has been pushed, the GitHub Release exists with release-please's notes but without artifacts. Recovery:
+
+```bash
+# 1. Delete the partial release (tag stays in place).
+gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes
+
+# 2. Fix the underlying signing failure on main.
+
+# 3. Re-run release.yml against the existing tag via workflow_dispatch.
+gh workflow run release.yml \
+  --repo blavity/terraform-provider-kinsta \
+  --ref vX.Y.Z
+```
+
+A future atomic-release refactor (release-please tags but does not publish; GoReleaser owns the GitHub Release) is tracked separately — it requires bridging release-please's tag-creation gap (its `skip-github-release` option also skips tag creation, which would break the trigger chain to `release.yml`).
 
 > This recipe is validated against ubuntu-24.04 runners, libkmsp11 1.9, and gnupg-pkcs11-scd from the Ubuntu noble apt repo.
 

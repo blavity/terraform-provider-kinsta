@@ -13,12 +13,18 @@
 # re-running invalidates any previously-uploaded public key on the Terraform
 # Registry. Delete or disable this workflow file after the initial bootstrap.
 #
+# Encryption: the artifact `private.asc.age` is encrypted to the maintainer's
+# SSH public key supplied as a workflow_dispatch input. Only someone with the
+# matching SSH private key can decrypt -- workflow_dispatch inputs are visible
+# in run metadata, but SSH public keys are public by design, so visibility is
+# not a leak. (Earlier passphrase-via-input approach was flagged in PR review:
+# input values ARE visible in run metadata, so they cannot be used as secrets.)
+#
 # Post-run steps (maintainer):
 #   1. Download the `signing-wrapper` artifact from this workflow run.
-#   2. Decrypt private.asc:
-#        openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 \
-#          -pass pass:"$PASSPHRASE" \
-#          -in private.asc.enc -out private.asc
+#   2. Decrypt private.asc with your SSH private key:
+#        age -d -i ~/.ssh/id_ed25519 -o private.asc private.asc.age
+#      (or any ed25519/rsa SSH key whose public half you provided as input)
 #   3. Set the repo secret:
 #        gh secret set GPG_PRIVATE_KEY \
 #          --repo blavity/terraform-provider-kinsta < private.asc
@@ -26,7 +32,7 @@
 #      (also stage it for github.com/opentofu/registry submission).
 #   5. Delete the workflow artifact from the run page (defense in depth even
 #      with short retention).
-#   6. Discard local private.asc / private.asc.enc.
+#   6. Discard local private.asc / private.asc.age.
 
 name: Bootstrap Signing Wrapper (one-time)
 
@@ -40,8 +46,8 @@ on:
       uid_email:
         description: "OpenPGP UID email (appears publicly on signed releases)"
         required: true
-      wrap_passphrase:
-        description: "Encryption passphrase for private.asc artifact (you decrypt with the same value)"
+      ssh_pubkey:
+        description: "Maintainer's SSH public key (ed25519 or rsa). private.asc.age is encrypted to this recipient; only your matching SSH private key can decrypt. Example: 'ssh-ed25519 AAAAC3Nz...'"
         required: true
 
 permissions:
@@ -121,13 +127,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          keygrip=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
-            | awk '/^S +KEYPAIRINFO / {print $3; exit}')
-          if [ -z "${keygrip}" ]; then
-            echo "ERROR: SCD LEARN did not surface a keygrip." >&2
+          # Surface KEYPAIRINFO records. Assert exactly one — if the keyring
+          # contains multiple keys we cannot tell which one is KMS_KEY_RESOURCE
+          # without additional plumbing, and silently wrapping the wrong key
+          # would produce a wrapper that signs releases with a different KMS
+          # key than the maintainer intended.
+          keypair_lines=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
+            | awk '/^S +KEYPAIRINFO / {print}')
+          keypair_count=$(printf '%s\n' "$keypair_lines" | grep -c . || true)
+          if [ "$keypair_count" -ne 1 ]; then
+            echo "ERROR: expected exactly one KEYPAIRINFO from SCD LEARN, found ${keypair_count}." >&2
+            printf '%s\n' "$keypair_lines" >&2
             cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null >&2 || true
+            echo "Scope kmsp11.yaml to a single CryptoKey before re-running." >&2
             exit 1
           fi
+          keygrip=$(printf '%s\n' "$keypair_lines" | awk '{print $3}')
           echo "KMS keygrip: ${keygrip}"
 
           gpg --batch --expert --command-fd 0 --pinentry-mode loopback --full-generate-key <<EOF
@@ -141,10 +156,14 @@ jobs:
           O
           EOF
 
-          keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
+          # Filter to the UID email we just set so any pre-existing keys on
+          # the runner image cannot be mis-selected. (CI runners are clean,
+          # but the same recipe is used in KEYS.md for local maintainer wraps
+          # where the keyring may already have unrelated keys.)
+          keyid=$(gpg --list-keys --with-colons --keyid-format LONG "${UID_EMAIL}" \
             | awk -F: '/^pub:/ {print $5; exit}')
           if [ -z "${keyid}" ]; then
-            echo "ERROR: no pub key after wrap." >&2
+            echo "ERROR: no pub key matching UID ${UID_EMAIL} after wrap." >&2
             gpg --list-keys || true
             exit 1
           fi
@@ -160,17 +179,34 @@ jobs:
           head -3 public.asc
           tail -1 public.asc
 
-      - name: Encrypt private.asc for artifact transport
-        env:
-          WRAP_PASSPHRASE: ${{ inputs.wrap_passphrase }}
+      - name: Install age (for SSH-recipient encryption)
         run: |
           set -euo pipefail
-          openssl enc -aes-256-cbc -pbkdf2 -iter 600000 \
-            -pass env:WRAP_PASSPHRASE \
-            -in private.asc -out private.asc.enc
-          rm -f private.asc
-          echo "private.asc encrypted to private.asc.enc"
-          ls -la public.asc private.asc.enc
+          sudo apt-get install -y age
+          age --version
+
+      - name: Encrypt private.asc to maintainer's SSH public key
+        env:
+          SSH_PUBKEY: ${{ inputs.ssh_pubkey }}
+        run: |
+          set -euo pipefail
+          # age supports ssh-ed25519 and ssh-rsa recipients natively. The
+          # recipient string is the SSH public key line, no extra format work.
+          # Validate the input looks like an SSH public key before proceeding.
+          if ! printf '%s' "$SSH_PUBKEY" | grep -Eq '^(ssh-(ed25519|rsa)|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/]+=*( .*)?$'; then
+            echo "ERROR: ssh_pubkey input does not look like an OpenSSH public key line." >&2
+            echo "Expected format: 'ssh-ed25519 AAAAC3Nz... [optional comment]'" >&2
+            exit 1
+          fi
+
+          recipient_file=$(mktemp)
+          printf '%s\n' "$SSH_PUBKEY" > "$recipient_file"
+          age --encrypt --recipients-file "$recipient_file" \
+            --output private.asc.age private.asc
+          rm -f private.asc "$recipient_file"
+
+          echo "private.asc encrypted to private.asc.age (recipient: SSH public key)"
+          ls -la public.asc private.asc.age
 
       - name: Upload signing-wrapper artifact
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
@@ -178,6 +214,6 @@ jobs:
           name: signing-wrapper
           path: |
             public.asc
-            private.asc.enc
+            private.asc.age
           retention-days: 1
           if-no-files-found: error
