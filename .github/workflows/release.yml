@@ -1,69 +1,36 @@
 # Release Workflow
 #
-# Triggered by semver tags pushed by release-please (e.g., v0.1.0).
-# Builds multi-platform provider binaries, signs the SHA256SUMS checksum
-# file with a Cloud KMS HSM-backed RSA-4096 signing key via PKCS#11
-# (libkmsp11 + gnupg-pkcs11-scd), and appends the artifacts to the GitHub
-# Release that release-please already created.
+# Triggered by semver tags pushed by release-please (e.g., v0.1.0). Builds
+# multi-platform provider binaries, signs the SHA256SUMS checksum file with
+# the GPG key stored in repo secrets, and appends the artifacts to the
+# GitHub Release that release-please already created.
 #
-# Failure mode: if signing fails after release-please created the Release,
-# the Release exists without artifacts. Recovery:
+# This is the canonical pattern from
+# hashicorp/terraform-provider-scaffolding-framework. See KEYS.md for the
+# one-time maintainer setup (generate keypair, register public.asc with the
+# Terraform Registry, store private.asc + passphrase as repo secrets).
+#
+# Failure recovery: if signing fails after release-please created the GH
+# Release, the Release exists without artifacts. Recovery:
 #   gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes
 #   gh workflow run release.yml --repo blavity/terraform-provider-kinsta \
 #     --ref vX.Y.Z
-# (the workflow_dispatch trigger below makes the re-run possible without
-# deleting and re-pushing the tag).
-#
-# See KEYS.md sec 4a for the authoritative recipe.
-#
-# Required repo secrets (provisioned by the host platform's KMS-backed signing infrastructure):
-#   KMS_KEY_RESOURCE     - Full Cloud KMS CryptoKeyVersion resource path
-#                          (projects/.../cryptoKeyVersions/N)
-#   WIF_PROVIDER         - Workload Identity Provider resource path
-#   WIF_SERVICE_ACCOUNT  - provider-signing@<project>.iam.gserviceaccount.com
-#   GPG_PRIVATE_KEY      - ASCII-armored OpenPGP "wrapper" private key that
-#                          binds the KMS-backed keygrip to a stable OpenPGP
-#                          identity. This is a smartcard STUB — actual signing
-#                          material stays in the HSM. Generated ONCE locally by
-#                          the maintainer (KEYS.md §4a) and stored as a repo
-#                          secret so the wrapper fingerprint stays stable
-#                          across runs. Without a stable fingerprint, the
-#                          Terraform Registry rejects every release because the
-#                          signing key id changes per run.
-#
-# Optional repo secrets:
-#   SIGNING_KEY_EMAIL    - Informational only. The OpenPGP UID is already baked
-#                          into GPG_PRIVATE_KEY at wrap time; this secret is
-#                          retained for human-readable workflow logs and is not
-#                          required for the signing chain to function.
+# (the workflow_dispatch trigger below makes the re-run possible.)
 
 name: Release
 
 on:
   push:
     tags:
-      - 'v*.*.*'
-  # workflow_dispatch enables manual re-runs against an existing tag, which is
-  # the recovery path when signing fails and the release-please-created
-  # GitHub Release needs to be re-populated after a fix lands on main.
-  # Use:  gh workflow run release.yml --ref vX.Y.Z
+      - "v*.*.*"
   workflow_dispatch:
 
 permissions:
   contents: write
-  id-token: write # required for Workload Identity Federation
 
 jobs:
   goreleaser:
-    # Pinned to ubuntu-24.04 (noble) to match the KEYS.md §4a validated
-    # signing-chain environment: gnupg-pkcs11-scd + libkmsp11 versions
-    # available in the noble apt repository are the ones this recipe has
-    # been validated against. Do not change to ubuntu-latest without
-    # re-validating the full signing chain end-to-end.
-    runs-on: ubuntu-24.04
-    env:
-      LIBKMSP11_VERSION: '1.9'
-      LIBKMSP11_SHA256: '5397f965073cd5d1e2c43e5148f102f31a7c835902f97eb41c7c9c0f1b876a40'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
         with:
@@ -72,158 +39,14 @@ jobs:
       - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v5
         with:
           go-version-file: go.mod
+          cache: true
 
-      - name: Authenticate to GCP via Workload Identity Federation
-        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2.1.13
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
+        id: import_gpg
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-
-      - name: Install KMS-via-GPG signing toolchain (libkmsp11 + gnupg-pkcs11-scd)
-        env:
-          KMS_KEY_RESOURCE: ${{ secrets.KMS_KEY_RESOURCE }}
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          SIGNING_KEY_EMAIL: ${{ secrets.SIGNING_KEY_EMAIL }}
-        run: |
-          set -euo pipefail
-
-          # Fail fast if GPG_PRIVATE_KEY is unset. This is the maintainer's
-          # one-time-generated OpenPGP wrapper (smartcard stub) that binds the
-          # KMS keygrip to a stable OpenPGP fingerprint. Without it, every run
-          # would mint a new fingerprint and Terraform Registry verification
-          # would fail. See KEYS.md §4a for one-time setup instructions.
-          if [ -z "${GPG_PRIVATE_KEY:-}" ]; then
-            echo "ERROR: GPG_PRIVATE_KEY repo secret is not set." >&2
-            echo "This secret is the ASCII-armored OpenPGP wrapper (smartcard" >&2
-            echo "stub) generated once locally by the maintainer per KEYS.md §4a." >&2
-            echo "Provision it before running this workflow." >&2
-            exit 1
-          fi
-
-          sudo apt-get update
-          sudo apt-get install -y gnupg gnupg-pkcs11-scd wget ca-certificates tar
-
-          # Download and verify libkmsp11 from GoogleCloudPlatform/kms-integrations.
-          tarball="libkmsp11-${LIBKMSP11_VERSION}-linux-amd64.tar.gz"
-          url="https://github.com/GoogleCloudPlatform/kms-integrations/releases/download/pkcs11-v${LIBKMSP11_VERSION}/${tarball}"
-          wget -qO "/tmp/${tarball}" "${url}"
-          echo "${LIBKMSP11_SHA256}  /tmp/${tarball}" | sha256sum -c -
-
-          sudo mkdir -p /opt/libkmsp11
-          sudo tar -xzf "/tmp/${tarball}" -C /opt/libkmsp11 --strip-components=1
-          sudo chmod 0755 /opt/libkmsp11
-          test -f /opt/libkmsp11/libkmsp11.so
-
-          mkdir -p ~/.gnupg
-          chmod 700 ~/.gnupg
-
-          # GPG agent: delegate smartcard ops to gnupg-pkcs11-scd.
-          cat > ~/.gnupg/gpg-agent.conf <<'EOF'
-          allow-loopback-pinentry
-          default-cache-ttl 600
-          scdaemon-program /usr/bin/gnupg-pkcs11-scd
-          EOF
-
-          # gnupg-pkcs11-scd uses whitespace-separated directives, NOT YAML.
-          # Valid directives: providers, provider-<name>-library, log-file, verbose.
-          # See: https://manpages.debian.org/testing/gnupg-pkcs11-scd/gnupg-pkcs11-scd.1.en.html
-          cat > ~/.gnupg/gnupg-pkcs11-scd.conf <<'EOF'
-          providers kmsp11
-          provider-kmsp11-library /opt/libkmsp11/libkmsp11.so
-          log-file /tmp/gnupg-pkcs11-scd.log
-          verbose
-          EOF
-          chmod 600 ~/.gnupg/gpg-agent.conf ~/.gnupg/gnupg-pkcs11-scd.conf
-
-          # libkmsp11 reads its own YAML config via KMS_PKCS11_CONFIG. The
-          # `key_ring` is derived from KMS_KEY_RESOURCE by stripping the
-          # `/cryptoKeys/<name>/cryptoKeyVersions/<n>` suffix.
-          key_ring="${KMS_KEY_RESOURCE%/cryptoKeys/*}"
-          # `generate_certs: true` is required so SCD LEARN can enumerate keys
-          # via cert objects (libkmsp11 default is false).
-          cat > ~/.gnupg/kmsp11.yaml <<EOF
-          ---
-          tokens:
-            - key_ring: "${key_ring}"
-              label: "kms-provider-signing"
-          generate_certs: true
-          log_directory: "/tmp"
-          EOF
-          chmod 600 ~/.gnupg/kmsp11.yaml
-          echo "KMS_PKCS11_CONFIG=$HOME/.gnupg/kmsp11.yaml" >> "$GITHUB_ENV"
-          export KMS_PKCS11_CONFIG="$HOME/.gnupg/kmsp11.yaml"
-
-          # Reset and (belt-and-suspenders) explicitly launch gpg-agent so the
-          # socket exists before we import the wrapper key.
-          gpgconf --kill all || true
-          gpgconf --launch gpg-agent
-
-          # Import the persistent OpenPGP wrapper (smartcard stub) generated
-          # ONCE locally by the maintainer per KEYS.md §4a. This binds the
-          # KMS-backed keygrip to a stable OpenPGP fingerprint that matches
-          # the public.asc uploaded to the Terraform Registry.
-          #
-          # No private signing material is being imported here — the wrapper
-          # is a stub that references the keygrip; the actual signing key
-          # stays in the HSM. At sign time, gpg resolves the wrapper →
-          # keygrip → gpg-agent → gnupg-pkcs11-scd → libkmsp11 → Cloud KMS.
-          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
-
-          # Extract the OpenPGP keyid from the imported wrapper. Use colon-
-          # delimited output (machine-parseable, format guaranteed stable by
-          # gpg(1) DETAILS) and grab the first `pub:` record's field 5 (long
-          # keyid). Validate strictly: 16 hex chars, uppercase.
-          keyid=$(gpg --list-keys --with-colons --keyid-format LONG \
-            | awk -F: '/^pub:/ {print $5; exit}')
-          if [ -z "${keyid}" ]; then
-            echo "ERROR: no OpenPGP public key present after import." >&2
-            gpg --list-keys || true
-            exit 1
-          fi
-          if ! printf '%s' "${keyid}" | grep -Eq '^[0-9A-F]{16}$'; then
-            echo "ERROR: extracted keyid '${keyid}' is not 16 hex chars." >&2
-            echo "Wrapper import may have produced unexpected output." >&2
-            exit 1
-          fi
-          echo "Imported KMS-backed GPG wrapper key: ${keyid}"
-          if [ -n "${SIGNING_KEY_EMAIL:-}" ]; then
-            echo "Informational: SIGNING_KEY_EMAIL=${SIGNING_KEY_EMAIL} (UID baked into wrapper at import; this value is for logs only)"
-          fi
-          echo "default-key ${keyid}" >> ~/.gnupg/gpg.conf
-          chmod 600 ~/.gnupg/gpg.conf
-
-          # Sanity check: confirm SCD LEARN can resolve a keygrip via libkmsp11
-          # AND that the resolved keygrip matches the wrapper we just imported.
-          # The exit-status-only check (pre-PR25) would silently pass if SCD
-          # surfaced a different KMS key than the one bound to the wrapper.
-          if ! gpg-connect-agent "SCD LEARN --force" /bye >/tmp/scd-learn.log 2>&1; then
-            echo "ERROR: gpg-connect-agent SCD LEARN failed:" >&2
-            cat /tmp/scd-learn.log >&2
-            cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null >&2 || true
-            echo "Check: (1) libkmsp11 loaded, (2) kmsp11.yaml correct, (3) IAM perms (cloudkms.viewer on keyring)" >&2
-            exit 1
-          fi
-
-          # Compare wrapper keygrip (gpg colon-format `grp:` record, field 10)
-          # with the keygrip surfaced by SCD LEARN (`S KEYPAIRINFO <keygrip>`).
-          # If they diverge, the wrapper references a different KMS key than
-          # libkmsp11 is exposing — GoReleaser would happily sign with the
-          # wrong key. Fail fast before any release artifact gets signed.
-          wrapper_keygrip=$(gpg --list-keys --with-keygrip --with-colons "${keyid}" \
-            | awk -F: '/^grp:/ {print $10; exit}')
-          scd_keygrip=$(awk '/^S +KEYPAIRINFO / {print $3; exit}' /tmp/scd-learn.log)
-          if [ -z "${wrapper_keygrip:-}" ] || [ -z "${scd_keygrip:-}" ]; then
-            echo "ERROR: failed to extract keygrip (wrapper='${wrapper_keygrip:-empty}', scd='${scd_keygrip:-empty}')" >&2
-            cat /tmp/scd-learn.log >&2
-            exit 1
-          fi
-          if [ "${wrapper_keygrip}" != "${scd_keygrip}" ]; then
-            echo "ERROR: wrapper keygrip (${wrapper_keygrip}) does not match SCD-resolved keygrip (${scd_keygrip})." >&2
-            echo "The imported wrapper references a different KMS key than libkmsp11 is exposing." >&2
-            echo "Check: (1) GPG_PRIVATE_KEY was wrapped against KMS_KEY_RESOURCE, (2) WIF SA can sign with KMS_KEY_RESOURCE." >&2
-            exit 1
-          fi
-          echo "Keygrip match confirmed: ${wrapper_keygrip}"
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
@@ -232,3 +55,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}

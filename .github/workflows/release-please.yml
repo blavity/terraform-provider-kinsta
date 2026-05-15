@@ -7,9 +7,9 @@
 # How it works:
 #   1. On push to main -> creates/updates a release PR with changelog + version bump
 #   2. On release PR merge -> creates GitHub Release + git tag (e.g., v0.1.0)
-#   3. The tag triggers release.yml which builds + signs provider binaries via
-#      Cloud KMS (libkmsp11 + gnupg-pkcs11-scd) and appends them to the
-#      release-please-created GitHub Release. See KEYS.md sec 4a.
+#   3. The tag triggers release.yml which builds + signs provider binaries with
+#      the GPG key in repo secrets, then appends the signed artifacts to the
+#      release-please-created GitHub Release. See KEYS.md.
 #
 # Note: release-please-action's skip-github-release option is NOT used here
 # because it also skips tag creation, which would prevent release.yml from
