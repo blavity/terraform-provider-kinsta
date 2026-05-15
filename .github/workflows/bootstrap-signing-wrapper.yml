@@ -120,6 +120,42 @@ jobs:
           gpgconf --kill all || true
           gpgconf --launch gpg-agent
 
+      - name: Diagnose KMS + libkmsp11 plumbing
+        env:
+          KMS_KEY_RESOURCE: ${{ secrets.KMS_KEY_RESOURCE }}
+        run: |
+          set -uo pipefail
+
+          echo "--- KMS_KEY_RESOURCE shape ---"
+          echo "${KMS_KEY_RESOURCE}" | sed -E 's|/cryptoKeyVersions/.*|/cryptoKeyVersions/<n>|'
+
+          echo "--- gcloud kms keys list on derived keyring (verifies WIF + viewer perm) ---"
+          key_ring="${KMS_KEY_RESOURCE%/cryptoKeys/*}"
+          project="$(echo "${key_ring}" | cut -d/ -f2)"
+          location="$(echo "${key_ring}" | cut -d/ -f4)"
+          ring_name="$(echo "${key_ring}" | cut -d/ -f6)"
+          gcloud kms keys list \
+            --project="${project}" \
+            --location="${location}" \
+            --keyring="${ring_name}" 2>&1 | head -20 || echo "(gcloud keys list FAILED)"
+
+          echo "--- kmsp11.yaml in use ---"
+          cat ~/.gnupg/kmsp11.yaml
+
+          echo "--- gnupg-pkcs11-scd.conf in use ---"
+          cat ~/.gnupg/gnupg-pkcs11-scd.conf
+
+          echo "--- SCD LEARN raw output ---"
+          gpg-connect-agent "SCD LEARN --force" /bye 2>&1 || echo "(SCD LEARN failed)"
+
+          echo "--- /tmp/gnupg-pkcs11-scd.log ---"
+          cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null || echo "(log file does not exist)"
+
+          echo "--- /tmp/libkmsp11_*.log (any) ---"
+          for f in /tmp/libkmsp11_*.log /tmp/libkmsp11*.txt; do
+            [ -f "$f" ] && { echo "=== $f ==="; cat "$f"; }
+          done
+
       - name: Wrap KMS keygrip as a persistent OpenPGP identity
         env:
           UID_NAME: ${{ inputs.uid_name }}
@@ -132,14 +168,17 @@ jobs:
           # without additional plumbing, and silently wrapping the wrong key
           # would produce a wrapper that signs releases with a different KMS
           # key than the maintainer intended.
-          keypair_lines=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
-            | awk '/^S +KEYPAIRINFO / {print}')
+          scd_output=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1)
+          keypair_lines=$(printf '%s\n' "$scd_output" | awk '/^S +KEYPAIRINFO / {print}')
           keypair_count=$(printf '%s\n' "$keypair_lines" | grep -c . || true)
           if [ "$keypair_count" -ne 1 ]; then
             echo "ERROR: expected exactly one KEYPAIRINFO from SCD LEARN, found ${keypair_count}." >&2
-            printf '%s\n' "$keypair_lines" >&2
-            cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null >&2 || true
-            echo "Scope kmsp11.yaml to a single CryptoKey before re-running." >&2
+            echo "--- SCD LEARN raw output ---" >&2
+            printf '%s\n' "$scd_output" >&2
+            echo "--- /tmp/gnupg-pkcs11-scd.log ---" >&2
+            cat /tmp/gnupg-pkcs11-scd.log 2>/dev/null >&2 || echo "(no log)" >&2
+            echo "--- /tmp/libkmsp11_*.log ---" >&2
+            for f in /tmp/libkmsp11_*.log; do [ -f "$f" ] && { echo "=== $f ==="; cat "$f"; } >&2; done
             exit 1
           fi
           keygrip=$(printf '%s\n' "$keypair_lines" | awk '{print $3}')
