@@ -142,7 +142,7 @@ Instead, the maintainer wraps the keygrip once locally, exports both halves of t
 
 # 1. Surface the key + extract the keygrip.
 keygrip=$(gpg-connect-agent "SCD LEARN --force" /bye 2>&1 \
-  | awk '/^S +(KEY-FRIEDNLY|KEYPAIRINFO) / {print $3; exit}')
+  | awk '/^S +KEYPAIRINFO / {print $3; exit}')
 # Note: SCD LEARN status lines have the form `S KEYPAIRINFO <keygrip> ...`,
 # so the keygrip is field 3 (after the `S` status prefix and the record name).
 
@@ -191,7 +191,7 @@ Run locally on an `ubuntu-24.04` container, with `gcloud auth application-defaul
 6. Cross-check by importing the exported `public.asc` into a fresh keyring and re-verifying.
 7. **Re-import the exported `private.asc` into a fresh keyring** and confirm the resulting `pub` fingerprint is identical to step 3. This proves the wrapper persists a stable identity across imports, which is the property the CI workflow relies on.
 
-If any step in the release workflow fails, the workflow aborts before GoReleaser runs and no GitHub Release is published. Tag pushes do not produce partial or unsigned releases.
+**Release atomicity**: release-please owns versioning, CHANGELOG, and tag creation; GoReleaser owns building, signing, and publishing the GitHub Release. release-please is configured with `skip-github-release: true`, so a tag push lands on a repo with no GitHub Release for that version yet. The release.yml workflow extracts the new version's CHANGELOG section, runs the KMS-via-PKCS11 signing chain, then has GoReleaser create the GitHub Release with the signed artifacts and the extracted notes. If any step before GoReleaser fails — signing-chain setup, sanity check, GoReleaser build — no GitHub Release is published and there are no orphaned artifacts to clean up. The git tag remains, so retrying after a fix is just re-pushing the tag (or `gh workflow run release.yml --ref vX.Y.Z`).
 
 > This recipe is validated against ubuntu-24.04 runners, libkmsp11 1.9, and gnupg-pkcs11-scd from the Ubuntu noble apt repo.
 

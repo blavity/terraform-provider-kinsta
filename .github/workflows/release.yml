@@ -3,10 +3,15 @@
 # Triggered by semver tags pushed by release-please (e.g., v0.1.0).
 # Builds multi-platform provider binaries, signs the SHA256SUMS checksum
 # file with a Cloud KMS HSM-backed RSA-4096 signing key via PKCS#11
-# (libkmsp11 + gnupg-pkcs11-scd), and publishes the artifacts as a
-# GitHub Release for the Terraform Registry to consume.
+# (libkmsp11 + gnupg-pkcs11-scd), and creates the GitHub Release for the
+# Terraform Registry to consume.
 #
-# See KEYS.md §4a for the authoritative recipe.
+# release-please runs with `skip-github-release: true`, so this workflow
+# is responsible for creating the GitHub Release after signing succeeds.
+# This makes release publishing atomic: a signing failure leaves no
+# GitHub Release behind, only the git tag (which can be re-triggered).
+#
+# See KEYS.md sec 4a for the authoritative recipe.
 #
 # Required repo secrets (provisioned by the host platform's KMS-backed signing infrastructure):
 #   KMS_KEY_RESOURCE     - Full Cloud KMS CryptoKeyVersion resource path
@@ -179,9 +184,10 @@ jobs:
           echo "default-key ${keyid}" >> ~/.gnupg/gpg.conf
           chmod 600 ~/.gnupg/gpg.conf
 
-          # Sanity check: confirm SCD LEARN can resolve the keygrip referenced
-          # by the wrapper. This validates the libkmsp11 + gnupg-pkcs11-scd
-          # plumbing without depending on its output for keyid discovery.
+          # Sanity check: confirm SCD LEARN can resolve a keygrip via libkmsp11
+          # AND that the resolved keygrip matches the wrapper we just imported.
+          # The exit-status-only check (pre-PR25) would silently pass if SCD
+          # surfaced a different KMS key than the one bound to the wrapper.
           if ! gpg-connect-agent "SCD LEARN --force" /bye >/tmp/scd-learn.log 2>&1; then
             echo "ERROR: gpg-connect-agent SCD LEARN failed:" >&2
             cat /tmp/scd-learn.log >&2
@@ -190,10 +196,54 @@ jobs:
             exit 1
           fi
 
+          # Compare wrapper keygrip (gpg colon-format `grp:` record, field 10)
+          # with the keygrip surfaced by SCD LEARN (`S KEYPAIRINFO <keygrip>`).
+          # If they diverge, the wrapper references a different KMS key than
+          # libkmsp11 is exposing — GoReleaser would happily sign with the
+          # wrong key. Fail fast before any release artifact gets signed.
+          wrapper_keygrip=$(gpg --list-keys --with-keygrip --with-colons "${keyid}" \
+            | awk -F: '/^grp:/ {print $10; exit}')
+          scd_keygrip=$(awk '/^S +KEYPAIRINFO / {print $3; exit}' /tmp/scd-learn.log)
+          if [ -z "${wrapper_keygrip:-}" ] || [ -z "${scd_keygrip:-}" ]; then
+            echo "ERROR: failed to extract keygrip (wrapper='${wrapper_keygrip:-empty}', scd='${scd_keygrip:-empty}')" >&2
+            cat /tmp/scd-learn.log >&2
+            exit 1
+          fi
+          if [ "${wrapper_keygrip}" != "${scd_keygrip}" ]; then
+            echo "ERROR: wrapper keygrip (${wrapper_keygrip}) does not match SCD-resolved keygrip (${scd_keygrip})." >&2
+            echo "The imported wrapper references a different KMS key than libkmsp11 is exposing." >&2
+            echo "Check: (1) GPG_PRIVATE_KEY was wrapped against KMS_KEY_RESOURCE, (2) WIF SA can sign with KMS_KEY_RESOURCE." >&2
+            exit 1
+          fi
+          echo "Keygrip match confirmed: ${wrapper_keygrip}"
+
+      - name: Extract release notes from CHANGELOG
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # release-please writes entries like `## [0.1.0](url) (2026-...)`.
+          # Strip the leading `v` from the tag to match the heading.
+          version="${REF_NAME#v}"
+          awk -v ver="$version" '
+            /^## \[/ {
+              if (in_section) exit
+              if (index($0, "[" ver "]") > 0) { in_section=1; next }
+            }
+            in_section { print }
+          ' CHANGELOG.md > /tmp/release-notes.md
+          if [ ! -s /tmp/release-notes.md ]; then
+            echo "ERROR: No release notes found for version ${version} in CHANGELOG.md" >&2
+            echo "Check that release-please's CHANGELOG entry uses a matching version heading." >&2
+            exit 1
+          fi
+          echo "--- release notes preview ---"
+          head -40 /tmp/release-notes.md
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
         with:
           version: latest
-          args: release --clean
+          args: release --clean --release-notes /tmp/release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

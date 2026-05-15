@@ -49,9 +49,11 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 release:
-  # release-please creates the GitHub Release with changelog notes;
-  # goreleaser appends the built artifacts without overwriting them.
-  mode: append
+  # release-please runs with `skip-github-release: true`, so the GitHub
+  # Release does NOT exist at this point — GoReleaser creates it here, after
+  # signing succeeds, so a signing failure can never leave an orphan Release.
+  # Release notes are passed via `--release-notes` from the workflow (extracted
+  # from CHANGELOG.md by the tag-triggered job).
   github:
     owner: blavity
     name: terraform-provider-kinsta

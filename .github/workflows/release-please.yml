@@ -6,8 +6,12 @@
 #
 # How it works:
 #   1. On push to main -> creates/updates a release PR with changelog + version bump
-#   2. On release PR merge -> creates GitHub Release + git tag (e.g., v0.1.0)
-#   3. The tag triggers release.yml which builds and publishes provider binaries
+#   2. On release PR merge -> creates the git tag (e.g., v0.1.0) and updates
+#      CHANGELOG.md. GitHub Release creation is deliberately skipped here so
+#      that signing failures cannot leave an orphan Release without artifacts.
+#   3. The tag triggers release.yml which builds + signs provider binaries via
+#      Cloud KMS (libkmsp11 + gnupg-pkcs11-scd) and only then creates the
+#      GitHub Release with the signed artifacts. See KEYS.md sec 4a.
 #
 # Conventional commits drive changelog generation:
 #   feat(provider): add wordpress domain resource   -> Features

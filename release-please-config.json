@@ -9,7 +9,8 @@
   ],
   "packages": {
     ".": {
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "skip-github-release": true
     }
   }
 }
