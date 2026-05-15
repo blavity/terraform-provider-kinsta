@@ -29,20 +29,17 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
 
 signs:
-  # Signing key is provided by Cloud KMS via libkmsp11 + gnupg-pkcs11-scd
-  # (see .github/workflows/release.yml and KEYS.md §4a). The default-key is
-  # written into ~/.gnupg/gpg.conf at workflow runtime, so no passphrase or
-  # explicit key id is needed here. `--no-tty --batch` is sufficient for
-  # headless signing against the KMS-backed key.
-  - cmd: gpg
-    signature: "${artifact}.sig"
-    artifacts: checksum
+  # GPG_FINGERPRINT is exported by `crazy-max/ghaction-import-gpg` in
+  # .github/workflows/release.yml and picks the right key out of the keyring.
+  # See KEYS.md for the one-time maintainer setup.
+  - artifacts: checksum
     args:
-      - "--no-tty"
       - "--batch"
-      - "--detach-sign"
+      - "--local-user"
+      - "{{ .Env.GPG_FINGERPRINT }}"
       - "--output"
       - "${signature}"
+      - "--detach-sign"
       - "${artifact}"
 
 snapshot:
@@ -50,10 +47,10 @@ snapshot:
 
 release:
   # release-please creates the GitHub Release with changelog notes when the
-  # release PR is merged; goreleaser appends the signed artifacts here.
-  # If signing fails, the release-please-created release exists without
-  # artifacts — recovery is `gh release delete vX.Y.Z` then `gh workflow run
-  # release.yml --ref vX.Y.Z`. See KEYS.md sec 4a "Release recovery".
+  # release PR is merged; goreleaser appends the signed artifacts here. If
+  # signing fails, the release-please-created release exists without
+  # artifacts — see release.yml header for the gh-release-delete + workflow_dispatch
+  # recovery sequence.
   mode: append
   github:
     owner: blavity
