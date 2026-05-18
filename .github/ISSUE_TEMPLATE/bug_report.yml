@@ -57,8 +57,10 @@ body:
     id: debug
     attributes:
       label: Debug output
-      description: Output of `TF_LOG=DEBUG terraform <command> 2>&1 | tee debug.log` (or paste a gist link). Strip API keys before pasting.
-      render: shell
+      description: |
+        Output of `TF_LOG=DEBUG terraform <command> 2>&1 | tee debug.log` —
+        paste inline wrapped in a ```shell fenced block, or link a gist
+        if it's long. Strip API keys before pasting.
     validations:
       required: false
 

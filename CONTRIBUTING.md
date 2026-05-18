@@ -4,7 +4,7 @@ Thanks for your interest in contributing. This guide covers how to set up a loca
 
 ## Code of Conduct
 
-This project adopts the [Contributor Covenant](CODE_OF_CONDUCT.md). By participating you agree to abide by its terms.
+This project follows the [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/). By participating you agree to abide by its terms. A local `CODE_OF_CONDUCT.md` will be added in a follow-up PR; until then, the canonical URL above is authoritative.
 
 ## Reporting bugs and requesting features
 

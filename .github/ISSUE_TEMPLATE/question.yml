@@ -20,7 +20,9 @@ body:
     id: context
     attributes:
       label: What you've tried
-      description: Configuration snippets, docs read, related issues searched.
-      render: hcl
+      description: |
+        Mix of prose and code is fine. Wrap any HCL snippets in fenced
+        ```hcl blocks. Include links to docs you've read or related issues
+        you've searched.
     validations:
       required: false
