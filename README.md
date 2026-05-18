@@ -1,5 +1,11 @@
 # Terraform Provider for Kinsta (MyKinsta API)
 
+[![Terraform Registry](https://img.shields.io/badge/registry-blavity%2Fkinsta-623CE4?logo=terraform&logoColor=white)](https://registry.terraform.io/providers/blavity/kinsta)
+[![OpenTofu Registry](https://img.shields.io/badge/opentofu-blavity%2Fkinsta-FFDA18?logo=opentofu&logoColor=black)](https://registry.opentofu.org/providers/blavity/kinsta)
+[![CI](https://github.com/blavity/terraform-provider-kinsta/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/blavity/terraform-provider-kinsta/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/blavity/terraform-provider-kinsta)](https://goreportcard.com/report/github.com/blavity/terraform-provider-kinsta)
+[![License](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](LICENSE)
+
 Manage your Kinsta WordPress hosting infrastructure with Terraform.
 
 **Status:** Pre-release (v0.1)
