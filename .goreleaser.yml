@@ -71,6 +71,12 @@ changelog:
       - '^Merge branch'
 
 release:
+  # `auto` reads the SemVer tag and flips the GitHub Release's prerelease
+  # flag when the tag carries a pre-release identifier (e.g. v1.0.0-rc.1,
+  # v1.0.0-beta.2). The Terraform Registry and OpenTofu Registry list
+  # prereleases but do not install them by default — consumers must opt in
+  # via version constraints like `version = "~> 1.0.0-rc"`.
+  prerelease: auto
   # Terraform Registry requires the manifest renamed with the version prefix.
   # https://developer.hashicorp.com/terraform/registry/providers/publishing#manifest-file
   extra_files:

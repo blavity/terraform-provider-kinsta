@@ -122,6 +122,45 @@ Releases use [GoReleaser](https://goreleaser.com/) triggered by a manual tag pus
 
 Required repository secrets: `GPG_PRIVATE_KEY`, `PASSPHRASE`.
 
+### Pre-releases
+
+Use SemVer pre-release identifiers to ship release candidates, betas, or alphas. Pick one identifier per cut and push that single tag:
+
+```bash
+# Release candidate (increment -rc.1 → -rc.2 each pass)
+TAG=v0.3.0-rc.1
+# Other styles: TAG=v0.3.0-beta.1  (feature-complete preview)
+#               TAG=v0.3.0-alpha.1 (early/internal)
+
+git tag "$TAG"
+git push origin "$TAG"
+```
+
+GoReleaser auto-detects the pre-release identifier and flags the GitHub Release as a pre-release. Both registries list pre-releases but do **not** install them by default — consumers must opt in:
+
+```hcl
+terraform {
+  required_providers {
+    kinsta = {
+      source  = "blavity/kinsta"
+      version = "~> 0.3.0-rc"   # opt into release candidates
+    }
+  }
+}
+```
+
+Drop the suffix on the final release (`v0.3.0`).
+
+### Local dry-run
+
+Validate the release artifacts and changelog body without pushing a tag:
+
+```bash
+goreleaser release --snapshot --clean
+```
+
+Outputs everything into `./dist/` for inspection.
+
 ## Trademarks
 
 Kinsta, MyKinsta, and WordPress are trademarks or registered trademarks of their respective owners. Blavity, Inc. is not affiliated with, endorsed by, or sponsored by Kinsta Ltd. or Automattic Inc. All other trademarks are the property of their respective owners.
