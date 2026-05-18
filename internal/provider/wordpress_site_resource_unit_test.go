@@ -284,32 +284,12 @@ func Test_resourceWordPressSiteDelete(t *testing.T) {
 	})
 }
 
-func Test_resourceWordPressSiteUpdate(t *testing.T) {
-	t.Run("update returns error because all fields are ForceNew", func(t *testing.T) {
-		mockClient := &mockWordPressSiteKinstaClient{
-			companyID: "test-company-id",
-		}
-
-		d := schema.TestResourceDataRaw(t, resourceWordPressSite().Schema, map[string]interface{}{
-			"display_name":   "Test Site",
-			"region":         "us-central1",
-			"admin_email":    "test@example.com",
-			"admin_password": "password",
-			"admin_user":     "admin",
-			"site_title":     "Test Site",
-			"wp_language":    "en_US",
-		})
-		d.SetId("test-site-id")
-
-		diags := resourceWordPressSiteUpdate(context.Background(), d, mockClient)
-
-		assert.True(t, diags.HasError())
-		assert.Contains(t, diags[0].Summary, "does not support updates")
-	})
-}
-
 func Test_resourceWordPressSite_Schema(t *testing.T) {
 	resource := resourceWordPressSite()
+
+	t.Run("resource has no update handler", func(t *testing.T) {
+		assert.Nil(t, resource.UpdateContext)
+	})
 
 	t.Run("required fields are marked as required", func(t *testing.T) {
 		requiredFields := []string{"display_name"}
