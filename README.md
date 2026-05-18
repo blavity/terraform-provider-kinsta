@@ -97,8 +97,8 @@ golangci-lint run ./...
 # Acceptance tests (requires live Kinsta credentials)
 TF_ACC=1 go test ./internal/provider/ -v
 
-# Regenerate docs (requires tfplugindocs)
-go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+# Regenerate docs (version must match the pin in .github/workflows/ci.yml)
+go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.25.0
 tfplugindocs generate --provider-name kinsta
 ```
 

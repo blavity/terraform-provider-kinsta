@@ -34,14 +34,26 @@ jobs:
         uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
           go-version-file: go.mod
+      # Pin to a specific tfplugindocs release so CI output is reproducible
+      # and upstream changes are reviewed intentionally. Bump alongside the
+      # `Development` section in README.md.
       - name: Install tfplugindocs
-        run: go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
+        run: go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@v0.25.0
       - name: Generate docs
         run: tfplugindocs generate --provider-name kinsta
-      - name: Fail on diff
+      - name: Fail on diff or untracked files
         run: |
           if ! git diff --exit-code docs/; then
             echo "::error::docs/ is out of sync with the provider schema."
             echo "::error::Run 'tfplugindocs generate --provider-name kinsta' locally and commit the result."
+            exit 1
+          fi
+          # `git diff` only inspects tracked files. A new resource without a
+          # committed docs/resources/*.md would otherwise slip through.
+          untracked=$(git ls-files --others --exclude-standard docs/)
+          if [ -n "$untracked" ]; then
+            echo "::error::tfplugindocs produced new files under docs/ that are not committed:"
+            echo "$untracked"
+            echo "::error::Run 'tfplugindocs generate --provider-name kinsta' locally and commit the generated files."
             exit 1
           fi
