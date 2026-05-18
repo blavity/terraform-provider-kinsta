@@ -52,6 +52,11 @@ release:
   # artifacts — see release.yml header for the gh-release-delete + workflow_dispatch
   # recovery sequence.
   mode: append
+  # Terraform Registry requires the manifest renamed with the version prefix.
+  # https://developer.hashicorp.com/terraform/registry/providers/publishing#manifest-file
+  extra_files:
+    - glob: terraform-registry-manifest.json
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
   github:
     owner: blavity
     name: terraform-provider-kinsta
