@@ -108,7 +108,7 @@ We welcome contributions made with AI assistance (Copilot, Claude, Cursor, etc.)
 Specifically:
 
 - **You verified it.** Read every line. Run the tests. Don't open a PR with code you don't understand or haven't exercised locally.
-- **Same quality gates.** AI-assisted code passes the same lint, tests, schema description, and docs-sync requirements as hand-written code. Use of an AI tool is not a justification to skip a check or lower a bar.
+- **Same quality gates.** AI-assisted code passes the same lint, tests, and docs-sync requirements as hand-written code. If you add or change Terraform schema fields, include an appropriate `Description` and/or `MarkdownDescription` so the schema is self-documenting and generated docs stay useful. Use of an AI tool is not a justification to skip a check or lower a bar.
 - **Don't file auto-generated bug reports.** Issues that read as raw model output with no human verification (no repro tested, no debug log gathered, suggested fixes that don't compile) will be closed. Either verify the report yourself or don't file it.
 - **Disclose substantial AI involvement.** A `Co-Authored-By:` trailer naming the model (e.g., `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>`) on commits where AI did meaningful authoring is appreciated. Optional, not required.
 - **License and provenance still apply.** Don't submit code an AI tool emitted verbatim from a non-MPL-2.0-compatible source you can identify.
