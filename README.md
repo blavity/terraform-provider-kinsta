@@ -124,13 +124,16 @@ Required repository secrets: `GPG_PRIVATE_KEY`, `PASSPHRASE`.
 
 ### Pre-releases
 
-Use SemVer pre-release identifiers to ship release candidates, betas, or alphas:
+Use SemVer pre-release identifiers to ship release candidates, betas, or alphas. Pick one identifier per cut and push that single tag:
 
 ```bash
-git tag v0.3.0-rc.1   # release candidate, increment .1/.2/.3 each pass
-git tag v0.3.0-beta.1 # feature-complete preview
-git tag v0.3.0-alpha.1 # early/internal
-git push origin <tag>
+# Release candidate (increment -rc.1 → -rc.2 each pass)
+TAG=v0.3.0-rc.1
+# Other styles: TAG=v0.3.0-beta.1  (feature-complete preview)
+#               TAG=v0.3.0-alpha.1 (early/internal)
+
+git tag "$TAG"
+git push origin "$TAG"
 ```
 
 GoReleaser auto-detects the pre-release identifier and flags the GitHub Release as a pre-release. Both registries list pre-releases but do **not** install them by default — consumers must opt in:
