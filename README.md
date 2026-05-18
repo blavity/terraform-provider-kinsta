@@ -118,7 +118,7 @@ Releases use [GoReleaser](https://goreleaser.com/) triggered by a manual tag pus
    git push origin v0.3.0
    ```
 2. The tag triggers the release workflow, which builds multi-platform binaries, signs them with GPG, generates a conventional-commit-grouped changelog into the GitHub Release body, and uploads the registry-shaped artifacts (zips, `SHA256SUMS`, `.sig`, manifest).
-3. The [Terraform Registry](https://registry.terraform.io) (and [OpenTofu Registry](https://github.com/opentofu/registry)) pick up the release automatically.
+3. The [Terraform Registry](https://registry.terraform.io) (and [OpenTofu Registry](https://registry.opentofu.org/)) pick up the release automatically.
 
 Required repository secrets: `GPG_PRIVATE_KEY`, `PASSPHRASE`.
 

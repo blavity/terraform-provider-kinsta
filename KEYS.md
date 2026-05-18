@@ -92,7 +92,10 @@ no artifacts. Recovery:
 
 ```bash
 gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes --cleanup-tag
-# fix the underlying cause on main, then re-push the tag:
+# `--cleanup-tag` removes the remote tag but not the local one. Drop the
+# stale local tag (or force-overwrite it below) before re-pushing.
+git tag -d vX.Y.Z 2>/dev/null || true
+# Fix the underlying cause on main, then re-push the tag:
 git tag vX.Y.Z <sha> && git push origin vX.Y.Z
 ```
 

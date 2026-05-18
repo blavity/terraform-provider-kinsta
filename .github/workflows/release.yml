@@ -16,8 +16,10 @@
 # as repo secrets).
 #
 # Failure recovery: if goreleaser fails partway, delete the partial release
-# (and tag if needed) and re-run:
+# (and tag if needed) and re-run. `--cleanup-tag` removes the remote tag
+# but not the local one, so drop the stale local tag before re-pushing:
 #   gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes --cleanup-tag
+#   git tag -d vX.Y.Z 2>/dev/null || true
 #   git tag vX.Y.Z <sha> && git push origin vX.Y.Z
 # Or use the workflow_dispatch trigger below to re-run against an existing
 # tag (after cleaning up any partial release).
