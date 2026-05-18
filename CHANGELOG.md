@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/blavity/terraform-provider-kinsta/compare/v0.1.0...v0.2.0) (2026-05-18)
+
+
+### Features
+
+* **release:** add Terraform Registry manifest to release artifacts ([#33](https://github.com/blavity/terraform-provider-kinsta/issues/33)) ([e525042](https://github.com/blavity/terraform-provider-kinsta/commit/e5250424858f5cbc88794d411d4ce91e43806553))
+
+
+### Miscellaneous
+
+* **deps:** bump actions/setup-go from 6.3.0 to 6.4.0 ([#18](https://github.com/blavity/terraform-provider-kinsta/issues/18)) ([0ad062a](https://github.com/blavity/terraform-provider-kinsta/commit/0ad062a3f1b79d666e7c5c479bcad8b4165e722f))
+* **deps:** bump github.com/hashicorp/terraform-plugin-sdk/v2 ([#24](https://github.com/blavity/terraform-provider-kinsta/issues/24)) ([79e98a6](https://github.com/blavity/terraform-provider-kinsta/commit/79e98a6499082476e688ad86eb9b58b7b709bf24))
+* **deps:** bump goreleaser/goreleaser-action from 7.0.0 to 7.2.1 ([#23](https://github.com/blavity/terraform-provider-kinsta/issues/23)) ([32ae4a1](https://github.com/blavity/terraform-provider-kinsta/commit/32ae4a112f946d827f2b42e9ae35c2254ea2bc9b))
+* **deps:** consolidate on Dependabot, remove Renovate ([#35](https://github.com/blavity/terraform-provider-kinsta/issues/35)) ([edde91a](https://github.com/blavity/terraform-provider-kinsta/commit/edde91ac847370b3f0ce7ef70d4d7eab86f3b5e3))
+
 ## [0.1.0](https://github.com/blavity/terraform-provider-kinsta/compare/v0.0.2...v0.1.0) (2026-05-15)
 
 
