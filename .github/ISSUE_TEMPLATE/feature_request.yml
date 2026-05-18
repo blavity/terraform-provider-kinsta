@@ -1,0 +1,42 @@
+name: Feature request
+description: Propose a new resource, data source, or behavior.
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What are you trying to do with Terraform that the provider doesn't support today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_api
+    attributes:
+      label: Proposed Terraform configuration
+      description: |
+        How would the new resource / data source / argument look in HCL?
+        A sketch is fine — names and attributes can shift in review.
+      render: hcl
+    validations:
+      required: true
+
+  - type: textarea
+    id: kinsta_api
+    attributes:
+      label: Upstream MyKinsta API
+      description: |
+        Link to the MyKinsta API endpoint(s) this would call.
+        Anything not exposed by the upstream API is out of scope.
+      placeholder: "https://api.kinsta.com/v2/sites/..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you've tried (provisioners, external resources, manual steps) and why they're insufficient.
+    validations:
+      required: false
