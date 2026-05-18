@@ -1,6 +1,6 @@
 # Terraform Provider for Kinsta (MyKinsta API)
 
-[![Terraform Registry](https://img.shields.io/badge/registry-blavity%2Fkinsta-623CE4?logo=terraform&logoColor=white)](https://registry.terraform.io/providers/blavity/kinsta)
+[![Terraform Registry Version](https://img.shields.io/terraform-provider/v/blavity/kinsta?logo=terraform&logoColor=white&label=terraform%20registry)](https://registry.terraform.io/providers/blavity/kinsta)
 [![OpenTofu Registry](https://img.shields.io/badge/opentofu-blavity%2Fkinsta-FFDA18?logo=opentofu&logoColor=black)](https://registry.opentofu.org/providers/blavity/kinsta)
 [![CI](https://github.com/blavity/terraform-provider-kinsta/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/blavity/terraform-provider-kinsta/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/blavity/terraform-provider-kinsta)](https://goreportcard.com/report/github.com/blavity/terraform-provider-kinsta)
