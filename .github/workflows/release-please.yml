@@ -16,6 +16,14 @@
 # firing. See googleapis/release-please-action README on splitting tagging
 # from PRs.
 #
+# Token: actions taken with the default GITHUB_TOKEN do not trigger downstream
+# workflows (GitHub safety mechanism against runaway loops). Without a separate
+# token, neither the release-please PR's CI nor release.yml will fire on tag
+# push — both must be kicked manually (close/reopen PR, workflow_dispatch).
+# Configure `RELEASE_PLEASE_TOKEN` (a fine-grained PAT or GitHub App
+# installation token with contents:write + pull-requests:write on this repo)
+# to fix the chain. Falls back to GITHUB_TOKEN if the secret is unset.
+#
 # Conventional commits drive changelog generation:
 #   feat(provider): add wordpress domain resource   -> Features
 #   fix(client): handle rate limit errors           -> Bug Fixes
@@ -38,4 +46,4 @@ jobs:
       - name: Run Release Please
         uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
