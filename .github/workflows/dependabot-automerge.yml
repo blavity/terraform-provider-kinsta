@@ -1,0 +1,40 @@
+# Auto-merge Dependabot PRs once CI passes.
+#
+# Scope (matches what renovate.json5 used to do):
+#   - patch updates (any ecosystem)
+#   - security updates (any severity, any ecosystem)
+#
+# Minor/major updates still require human review.
+#
+# Inputs from github.event.pull_request are GitHub-controlled (URLs, bot
+# login) — no untrusted user input flows into shell commands.
+
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7 # v2.3.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve and enable auto-merge
+        if: |
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.ghsa-id != ''
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
