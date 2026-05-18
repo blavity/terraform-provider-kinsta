@@ -20,6 +20,7 @@ bin/
 *.out
 .gocache/
 .gomodcache/
+vendor/
 
 # Environment variables
 .env
