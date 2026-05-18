@@ -101,6 +101,20 @@ Releases are cut manually by a maintainer pushing a semver tag — see the **Rel
 
 Contributors don't need release access — open a PR, get it merged, and the next release will include it.
 
+## AI-assisted contributions
+
+We welcome contributions made with AI assistance (Copilot, Claude, Cursor, etc.). The bar is the same as for any other contribution: **you are the author of record and responsible for what you submit.**
+
+Specifically:
+
+- **You verified it.** Read every line. Run the tests. Don't open a PR with code you don't understand or haven't exercised locally.
+- **Same quality gates.** AI-assisted code passes the same lint, tests, schema description, and docs-sync requirements as hand-written code. Use of an AI tool is not a justification to skip a check or lower a bar.
+- **Don't file auto-generated bug reports.** Issues that read as raw model output with no human verification (no repro tested, no debug log gathered, suggested fixes that don't compile) will be closed. Either verify the report yourself or don't file it.
+- **Disclose substantial AI involvement.** A `Co-Authored-By:` trailer naming the model (e.g., `Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>`) on commits where AI did meaningful authoring is appreciated. Optional, not required.
+- **License and provenance still apply.** Don't submit code an AI tool emitted verbatim from a non-MPL-2.0-compatible source you can identify.
+
+Reviewers may push back harder on AI-assisted PRs that look unverified — that's a feature, not a slight against the tooling.
+
 ## License
 
 By contributing, you agree your contributions are licensed under [MPL-2.0](LICENSE), matching the project license.
