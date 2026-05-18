@@ -13,6 +13,10 @@
     ":automergePatch",
   ],
   // Security vulnerability alerts bypass the schedule and auto-merge once CI passes.
+  // `osvVulnerabilityAlerts` opts into OSV-sourced advisories (broader than
+  // GitHub Dependabot alone); `vulnerabilityAlerts` configures handling for
+  // both sources.
+  osvVulnerabilityAlerts: true,
   vulnerabilityAlerts: {
     enabled: true,
     schedule: ["at any time"],
