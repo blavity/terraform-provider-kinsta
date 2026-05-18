@@ -1,0 +1,71 @@
+name: Bug report
+description: Report a defect in the provider.
+title: "bug: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill out every section so we can reproduce quickly.
+
+        For security issues, do not file here — use [GitHub Security Advisories](https://github.com/blavity/terraform-provider-kinsta/security/advisories/new).
+
+  - type: input
+    id: provider_version
+    attributes:
+      label: Provider version
+      description: Output of `terraform providers` for `registry.terraform.io/blavity/kinsta`.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+
+  - type: input
+    id: terraform_version
+    attributes:
+      label: Terraform / OpenTofu version
+      description: Output of `terraform version` or `tofu version`.
+      placeholder: "Terraform v1.10.5 on darwin_arm64"
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Minimal reproducing configuration
+      description: Smallest `.tf` snippet that reproduces the issue. Redact any credentials.
+      render: hcl
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include the full error message.
+    validations:
+      required: true
+
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug output
+      description: Output of `TF_LOG=DEBUG terraform <command> 2>&1 | tee debug.log` (or paste a gist link). Strip API keys before pasting.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Workarounds tried, related issues, environment details.
+    validations:
+      required: false

@@ -1,0 +1,26 @@
+name: Question
+description: Ask how to do something with the provider.
+title: "question: "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If [Discussions](https://github.com/blavity/terraform-provider-kinsta/discussions) is enabled on this repo, please prefer that. Use this template if you'd rather track an answer in Issues.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do, and what's confusing or unclear?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What you've tried
+      description: Configuration snippets, docs read, related issues searched.
+      render: hcl
+    validations:
+      required: false
