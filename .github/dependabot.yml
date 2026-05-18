@@ -22,7 +22,6 @@ updates:
       - go
     commit-message:
       prefix: "chore(deps)"
-      include: scope
     groups:
       go-modules:
         patterns:
@@ -43,7 +42,6 @@ updates:
       - ci
     commit-message:
       prefix: "chore(ci)"
-      include: scope
     groups:
       github-actions:
         patterns:
