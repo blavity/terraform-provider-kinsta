@@ -71,11 +71,15 @@ cheap; see ADR-0002).
 Once secrets are provisioned and `public.asc` is registered:
 
 1. Land any pending changes on `main`.
-2. Merge the release-please `chore(main): release X.Y.Z` PR — this creates
-   the git tag and the (empty) GitHub Release.
+2. From `main`, push a semver tag:
+   ```bash
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```
 3. The tag triggers `.github/workflows/release.yml`, which imports the GPG
-   key, runs GoReleaser, signs the `SHA256SUMS` checksum file, and appends
-   the artifacts to the release-please-created GitHub Release.
+   key, runs GoReleaser, signs the `SHA256SUMS` checksum file, generates
+   the changelog into the GitHub Release body, and uploads the
+   registry-shaped artifacts.
 4. Once the workflow succeeds, the Terraform Registry's webhook (configured
    one-time via the Registry's "Publish Provider" flow) ingests the
    release. The new version becomes installable as
@@ -83,17 +87,17 @@ Once secrets are provisioned and `public.asc` is registered:
 
 ## Release recovery
 
-If signing fails after release-please has created the empty GitHub Release,
-the Release exists without artifacts. Recovery:
+If GoReleaser fails partway, the GitHub Release may exist with partial or
+no artifacts. Recovery:
 
 ```bash
-gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes
-# fix the underlying cause on main, then:
-gh workflow run release.yml --repo blavity/terraform-provider-kinsta --ref vX.Y.Z
+gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes --cleanup-tag
+# fix the underlying cause on main, then re-push the tag:
+git tag vX.Y.Z <sha> && git push origin vX.Y.Z
 ```
 
-The `workflow_dispatch` trigger in `release.yml` makes this re-run path
-work without deleting and re-pushing the tag.
+The `workflow_dispatch` trigger in `release.yml` is an alternative re-run
+path against an already-cleaned-up tag.
 
 ## Rotation
 
