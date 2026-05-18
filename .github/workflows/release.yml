@@ -1,30 +1,35 @@
 # Release Workflow
 #
-# Triggered by semver tags pushed by release-please (e.g., v0.1.0). Builds
-# multi-platform provider binaries, signs the SHA256SUMS checksum file with
-# the GPG key stored in repo secrets, and appends the artifacts to the
-# GitHub Release that release-please already created.
+# To cut a release: push a semver tag from main, e.g.
+#   git tag v0.3.0 && git push origin v0.3.0
 #
-# This is the canonical pattern from
-# hashicorp/terraform-provider-scaffolding-framework. See KEYS.md for the
-# one-time maintainer setup (generate keypair, register public.asc with the
-# Terraform Registry, store private.asc + passphrase as repo secrets).
+# That tag triggers this workflow, which builds multi-platform provider
+# binaries, signs the SHA256SUMS checksum file with the GPG key stored in
+# repo secrets, generates a conventional-commit-grouped changelog into the
+# GitHub Release body, and uploads the artifacts. The release-please
+# automation was removed in favor of this manual-tag flow — it matches the
+# HashiCorp scaffolding-framework canonical pattern and the rest of the
+# Terraform provider ecosystem (terraform-provider-aws, -google, etc.).
 #
-# Failure recovery: if signing fails after release-please created the GH
-# Release, the Release exists without artifacts. Recovery:
-#   gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes
-#   gh workflow run release.yml --repo blavity/terraform-provider-kinsta \
-#     --ref vX.Y.Z
-# (the workflow_dispatch trigger below makes the re-run possible.)
+# See KEYS.md for the one-time maintainer setup (generate keypair, register
+# public.asc with the Terraform Registry, store private.asc + passphrase
+# as repo secrets).
+#
+# Failure recovery: if goreleaser fails partway, delete the partial release
+# (and tag if needed) and re-run. `--cleanup-tag` removes the remote tag
+# but not the local one, so drop the stale local tag before re-pushing:
+#   gh release delete vX.Y.Z --repo blavity/terraform-provider-kinsta --yes --cleanup-tag
+#   git tag -d vX.Y.Z 2>/dev/null || true
+#   git tag vX.Y.Z <sha> && git push origin vX.Y.Z
+# Or use the workflow_dispatch trigger below to re-run against an existing
+# tag (after cleaning up any partial release).
 
 name: Release
 
 on:
   push:
     tags:
-      # Match every semver tag pushed by release-please, including
-      # prereleases like `v0.0.1-rc.1`. Matches hashicorp/terraform-provider-
-      # scaffolding-framework's canonical pattern.
+      # Match every semver tag, including prereleases like `v0.0.1-rc.1`.
       - "v*"
   workflow_dispatch:
 

@@ -110,14 +110,17 @@ provider_installation {
 
 ## Releasing
 
-Releases are automated via [release-please](https://github.com/googleapis/release-please) and [GoReleaser](https://goreleaser.com/):
+Releases use [GoReleaser](https://goreleaser.com/) triggered by a manual tag push — the canonical Terraform provider pattern (`terraform-provider-aws`, `-google`, the HashiCorp scaffolding-framework template):
 
-1. Merge conventional commits to `main` — release-please opens a release PR.
-2. Merge the release PR — release-please creates a tag (e.g., `v0.1.0`) and a GitHub Release.
-3. The tag triggers the release workflow, which builds multi-platform binaries and signs them with GPG.
-4. The [Terraform Registry](https://registry.terraform.io) picks up the release automatically.
+1. From `main`, push a semver tag:
+   ```bash
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```
+2. The tag triggers the release workflow, which builds multi-platform binaries, signs them with GPG, generates a conventional-commit-grouped changelog into the GitHub Release body, and uploads the registry-shaped artifacts (zips, `SHA256SUMS`, `.sig`, manifest).
+3. The [Terraform Registry](https://registry.terraform.io) (and [OpenTofu Registry](https://registry.opentofu.org/)) pick up the release automatically.
 
-Required repository secrets: `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`.
+Required repository secrets: `GPG_PRIVATE_KEY`, `PASSPHRASE`.
 
 ## Trademarks
 

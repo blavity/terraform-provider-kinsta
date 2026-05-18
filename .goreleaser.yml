@@ -45,13 +45,32 @@ signs:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
+# Group commits by conventional-commit type for the GitHub Release body.
+# Replaces the CHANGELOG.md previously maintained by release-please — the
+# release notes themselves serve that purpose now (Terraform Registry reads
+# the release body, not a CHANGELOG file).
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug Fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Documentation
+      regexp: '^.*?docs(\(.+\))??!?:.+$'
+      order: 2
+    - title: Miscellaneous
+      order: 99
+  filters:
+    exclude:
+      - '^chore\(release\):'
+      - '^Merge pull request'
+      - '^Merge branch'
+
 release:
-  # release-please creates the GitHub Release with changelog notes when the
-  # release PR is merged; goreleaser appends the signed artifacts here. If
-  # signing fails, the release-please-created release exists without
-  # artifacts — see release.yml header for the gh-release-delete + workflow_dispatch
-  # recovery sequence.
-  mode: append
   # Terraform Registry requires the manifest renamed with the version prefix.
   # https://developer.hashicorp.com/terraform/registry/providers/publishing#manifest-file
   extra_files:
