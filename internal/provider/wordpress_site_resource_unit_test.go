@@ -242,6 +242,25 @@ func Test_resourceWordPressSiteRead(t *testing.T) {
 
 		assert.True(t, diags.HasError())
 	})
+
+	t.Run("out-of-band deletion clears ID without erroring", func(t *testing.T) {
+		// Principle III: Resources MUST handle 404 on Read by calling d.SetId("")
+		// and returning nil — never by returning an error. This is the path
+		// that lets Terraform detect drift and re-create.
+		mockClient := &mockWordPressSiteKinstaClient{
+			getWordPressSite: func(ctx context.Context, id string) (*client.GetWordPressSiteResponse, error) {
+				return nil, &client.NotFoundError{Path: "/sites/" + id}
+			},
+		}
+
+		d := schema.TestResourceDataRaw(t, resourceWordPressSite().Schema, map[string]interface{}{})
+		d.SetId("test-site-id")
+
+		diags := resourceWordPressSiteRead(context.Background(), d, mockClient)
+
+		assert.False(t, diags.HasError(), "404 must not surface as a diagnostic error")
+		assert.Equal(t, "", d.Id(), "404 must clear the resource ID")
+	})
 }
 
 func Test_resourceWordPressSiteDelete(t *testing.T) {
