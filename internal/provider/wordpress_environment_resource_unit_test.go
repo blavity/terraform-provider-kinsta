@@ -692,6 +692,16 @@ func Test_resourceWordPressEnvironmentRead_DriftClearsID(t *testing.T) {
 // resource retries with exponential backoff. This test verifies the retry
 // path by failing the first attempt and succeeding the second.
 func Test_resourceWordPressEnvironmentCreate_DisplayNameRetry(t *testing.T) {
+	// Swap the package-level afterFunc with an instant-fire so the retry
+	// loop doesn't burn real wall-clock seconds. Restored automatically.
+	origAfter := afterFunc
+	afterFunc = func(time.Duration) <-chan time.Time {
+		ch := make(chan time.Time, 1)
+		ch <- time.Now()
+		return ch
+	}
+	t.Cleanup(func() { afterFunc = origAfter })
+
 	createCallCount := 0
 	siteCallCount := 0
 

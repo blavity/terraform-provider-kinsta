@@ -12,6 +12,15 @@ import (
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
+// afterFunc is the timer factory used by the retry loop in
+// resourceWordPressEnvironmentCreate. It is package-private and indirected
+// through a variable specifically so unit tests can swap in an instant-fire
+// implementation, keeping the retry-coverage tests deterministic and fast
+// instead of waiting on real wall-clock seconds. Production code never
+// touches this directly; only tests should override it (and must restore
+// the default via t.Cleanup).
+var afterFunc = time.After
+
 func resourceWordPressEnvironment() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceWordPressEnvironmentCreate,
@@ -158,7 +167,7 @@ func resourceWordPressEnvironmentCreate(ctx context.Context, d *schema.ResourceD
 			select {
 			case <-ctx.Done():
 				return diag.FromErr(ctx.Err())
-			case <-time.After(waitTime):
+			case <-afterFunc(waitTime):
 				continue
 			}
 		}
