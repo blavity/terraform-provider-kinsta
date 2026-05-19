@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1101,4 +1103,91 @@ func TestClient_NoCredentialLeakInErrors(t *testing.T) {
 			assert.NotContains(t, err.Error(), adminPassword, "admin password leaked into error: %s", err.Error())
 		})
 	}
+}
+
+// Principle V: tests run under -race because Terraform's resource graph
+// invokes provider methods concurrently. This test fires many goroutines
+// against the same *Client to give the race detector something to inspect
+// on the shared http.Client and any future internal state. It also serves
+// as a smoke test that the client itself does not mutate shared state.
+func TestClient_ConcurrentCalls(t *testing.T) {
+	var requestCount int64
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt64(&requestCount, 1)
+
+		// Respond differently per endpoint so we exercise multiple code paths
+		// rather than just hammering one happy path.
+		switch r.Method {
+		case http.MethodGet:
+			if r.URL.Path == "/sites" {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				resp := GetWordPressSitesResponse{}
+				resp.Company.Sites = []WordPressSite{{ID: "s1"}}
+				encodeJSON(w, resp)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			encodeJSON(w, GetWordPressSiteResponse{Site: WordPressSite{ID: "site-id"}})
+		case http.MethodDelete:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			encodeJSON(w, DeleteWordPressSiteResponse{OperationID: "op", Status: 202})
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	}))
+	defer server.Close()
+
+	c := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	const goroutines = 16
+	const callsPerGoroutine = 4
+
+	var wg sync.WaitGroup
+	errs := make(chan error, goroutines*callsPerGoroutine)
+
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			ctx := context.Background()
+			for j := 0; j < callsPerGoroutine; j++ {
+				switch (workerID + j) % 3 {
+				case 0:
+					if _, err := c.GetWordPressSite(ctx, "site-id"); err != nil {
+						errs <- err
+					}
+				case 1:
+					if _, err := c.GetWordPressSites(ctx); err != nil {
+						errs <- err
+					}
+				case 2:
+					if _, err := c.DeleteWordPressSite(ctx, "site-id"); err != nil {
+						errs <- err
+					}
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		t.Errorf("concurrent call failed: %v", err)
+	}
+
+	assert.Equal(t, int64(goroutines*callsPerGoroutine), atomic.LoadInt64(&requestCount),
+		"every concurrent call should have reached the server")
+	// CompanyID() is a getter exercised here to make sure it remains safe under contention
+	// (a future refactor might add lazy initialization or caching).
+	assert.Equal(t, "test-company", c.CompanyID())
 }
