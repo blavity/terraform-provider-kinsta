@@ -793,6 +793,201 @@ func TestClient_DeleteWordPressEnvironment_Error(t *testing.T) {
 	assert.Contains(t, err.Error(), "API error")
 }
 
+func TestClient_GetWordPressSites(t *testing.T) {
+	companyID := "test-company-123"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method)
+		assert.Equal(t, "/sites", r.URL.Path)
+		assert.Equal(t, companyID, r.URL.Query().Get("company"))
+		assert.Equal(t, "Bearer test-api-key", r.Header.Get("Authorization"))
+
+		response := GetWordPressSitesResponse{}
+		response.Company.Sites = []WordPressSite{
+			{ID: "site-1", Name: "site-one", DisplayName: "Site One"},
+			{ID: "site-2", Name: "site-two", DisplayName: "Site Two"},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		encodeJSON(w, response)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  companyID,
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.GetWordPressSites(context.Background())
+
+	require.NoError(t, err)
+	assert.Len(t, resp.Company.Sites, 2)
+	assert.Equal(t, "site-1", resp.Company.Sites[0].ID)
+}
+
+func TestClient_GetWordPressSites_Error(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.GetWordPressSites(context.Background())
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "API error")
+}
+
+func TestClient_CreateWordPressSite_APIError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.CreateWordPressSite(context.Background(), &CreateWordPressSiteRequest{
+		Company:     "test-company",
+		DisplayName: "Test Site",
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "API error")
+}
+
+func TestClient_GetWordPressSite_APIError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.GetWordPressSite(context.Background(), "site-id")
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "API error")
+}
+
+func TestClient_DeleteWordPressSite_APIError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.DeleteWordPressSite(context.Background(), "site-id")
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "API error")
+}
+
+func TestClient_do_TransportError(t *testing.T) {
+	// Start a server, then immediately close it so the transport fails.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	closedURL := server.URL
+	server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    closedURL,
+		httpClient: &http.Client{Timeout: 500 * time.Millisecond},
+	}
+
+	resp, err := client.GetWordPressSite(context.Background(), "site-id")
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+	// Transport failures surface as net errors, not our "API error" string.
+	assert.NotContains(t, err.Error(), "API error")
+}
+
+func TestClient_do_RequestConstructionError(t *testing.T) {
+	// An invalid base URL fails http.NewRequestWithContext.
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    "://invalid-url",
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.GetWordPressSite(context.Background(), "site-id")
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+}
+
+func TestClient_do_JSONDecodeError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("this is not valid json"))
+	}))
+	defer server.Close()
+
+	client := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := client.GetWordPressSite(context.Background(), "site-id")
+
+	require.Error(t, err)
+	assert.Nil(t, resp)
+}
+
+func TestPollBackoff(t *testing.T) {
+	// Documented schedule: 2, 4, 8, 15, 30, then capped at 30 for any attempt >= 5.
+	cases := []struct {
+		attempt int
+		want    time.Duration
+	}{
+		{0, 2 * time.Second},
+		{1, 4 * time.Second},
+		{2, 8 * time.Second},
+		{3, 15 * time.Second},
+		{4, 30 * time.Second},
+		{5, 30 * time.Second},
+		{6, 30 * time.Second},
+		{100, 30 * time.Second},
+	}
+	for _, tc := range cases {
+		assert.Equal(t, tc.want, pollBackoff(tc.attempt), "attempt %d", tc.attempt)
+	}
+}
+
 func TestPollOperation_EnvironmentID(t *testing.T) {
 	expectedEnvID := "test-env-789"
 
