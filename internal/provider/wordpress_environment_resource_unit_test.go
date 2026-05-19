@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
@@ -615,4 +616,134 @@ func Test_resourceWordPressEnvironmentImport(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid import ID format")
 	})
+}
+
+// Read drift: when the environment's ID is no longer present in the site's
+// environments list, the resource MUST clear its ID (Principle III) so
+// Terraform re-creates instead of erroring on a phantom resource.
+func Test_resourceWordPressEnvironmentRead_DriftClearsID(t *testing.T) {
+	mockClient := &mockWordPressEnvironmentKinstaClient{
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID: siteID,
+					Environments: []client.WordPressEnvironment{
+						// Different env IDs — our target env was deleted out of band.
+						{ID: "other-env-id", Name: "live", DisplayName: "Live"},
+					},
+				},
+			}, nil
+		},
+	}
+
+	d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{
+		"site_id": "test-site-id",
+	})
+	d.SetId("deleted-env-id")
+
+	diags := resourceWordPressEnvironmentRead(context.Background(), d, mockClient)
+
+	assert.False(t, diags.HasError(), "drift detection must not surface as an error")
+	assert.Equal(t, "", d.Id(), "missing env must clear the resource ID")
+}
+
+// Eventual-consistency retry: after deleting an environment, the API may
+// reject re-creation with "display name … already used" for ~30s. The
+// resource retries with exponential backoff. This test verifies the retry
+// path by failing the first attempt and succeeding the second.
+func Test_resourceWordPressEnvironmentCreate_DisplayNameRetry(t *testing.T) {
+	createCallCount := 0
+	siteCallCount := 0
+
+	mockClient := &mockWordPressEnvironmentKinstaClient{
+		companyID: "test-company-id",
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			siteCallCount++
+			if siteCallCount == 1 {
+				return &client.GetWordPressSiteResponse{
+					Site: client.WordPressSite{
+						ID:           siteID,
+						Environments: []client.WordPressEnvironment{},
+					},
+				}, nil
+			}
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID: siteID,
+					Environments: []client.WordPressEnvironment{
+						{ID: "new-env-id", Name: "staging", DisplayName: "staging"},
+					},
+				},
+			}, nil
+		},
+		createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
+			createCallCount++
+			if createCallCount == 1 {
+				// First call: API still considers the display name reserved.
+				return nil, errors.New("display name 'staging' is already used by another environment")
+			}
+			return &client.CreateWordPressEnvironmentResponse{
+				OperationID: "env-op-id",
+				Status:      202,
+			}, nil
+		},
+		pollOperation: func(ctx context.Context, operationID string) (string, error) {
+			return "", nil
+		},
+	}
+
+	d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{
+		"site_id":      "test-site-id",
+		"display_name": "staging",
+	})
+
+	// 5s deadline keeps the test fast: first retry waits 1s (1<<0), second wait would be 2s.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	diags := resourceWordPressEnvironmentCreate(ctx, d, mockClient)
+
+	assert.False(t, diags.HasError(), "retry should recover from eventual-consistency conflict")
+	assert.Equal(t, 2, createCallCount, "should have retried exactly once")
+	assert.Equal(t, "new-env-id", d.Id())
+}
+
+// When the after-create site listing returns no new environment ID (e.g., a
+// stale read of the API), the resource MUST surface an explicit error rather
+// than committing partial state.
+func Test_resourceWordPressEnvironmentCreate_NoNewEnvID(t *testing.T) {
+	mockClient := &mockWordPressEnvironmentKinstaClient{
+		companyID: "test-company-id",
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			// Same environment list before and after creation → no new ID found.
+			return &client.GetWordPressSiteResponse{
+				Site: client.WordPressSite{
+					ID: siteID,
+					Environments: []client.WordPressEnvironment{
+						{ID: "pre-existing-env", Name: "live"},
+					},
+				},
+			}, nil
+		},
+		createWordPressEnvironment: func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error) {
+			return &client.CreateWordPressEnvironmentResponse{
+				OperationID: "env-op-id",
+				Status:      202,
+			}, nil
+		},
+		pollOperation: func(ctx context.Context, operationID string) (string, error) {
+			return "", nil
+		},
+	}
+
+	d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{
+		"site_id":      "test-site-id",
+		"display_name": "staging",
+	})
+
+	diags := resourceWordPressEnvironmentCreate(context.Background(), d, mockClient)
+
+	require.True(t, diags.HasError(), "missing new env ID must surface an error, not silent success")
+	assert.Contains(t, diags[0].Summary, "failed to identify newly created environment")
+	assert.Equal(t, "", d.Id(), "no partial state when env ID can't be determined")
 }
