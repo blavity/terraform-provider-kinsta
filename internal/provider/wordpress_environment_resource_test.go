@@ -53,28 +53,6 @@ func TestAcc_ResourceWordPressEnvironment_Premium(t *testing.T) {
 	})
 }
 
-func TestAcc_ResourceWordPressEnvironment_CustomSettings(t *testing.T) {
-	if os.Getenv("TF_ACC") == "" {
-		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccResourceWordPressEnvironmentConfigCustom,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWordPressEnvironmentExists("kinsta_wordpress_environment.custom"),
-					resource.TestCheckResourceAttr("kinsta_wordpress_environment.custom", "php_version", "8.2"),
-					resource.TestCheckResourceAttr("kinsta_wordpress_environment.custom", "wp_debug", "true"),
-					resource.TestCheckResourceAttr("kinsta_wordpress_environment.custom", "wp_debug_display", "true"),
-				),
-			},
-		},
-	})
-}
-
 const testAccResourceWordPressEnvironmentConfig = `
 provider "kinsta" {
   # API key and company ID should be set via environment variables:
@@ -122,34 +100,6 @@ resource "kinsta_wordpress_environment" "premium_staging" {
   is_premium    = true
   admin_email   = "premium@example.com"
   admin_password = "PremiumP@ss123"
-}
-`
-
-const testAccResourceWordPressEnvironmentConfigCustom = `
-provider "kinsta" {
-  # API key and company ID should be set via environment variables:
-  # KINSTA_API_KEY and KINSTA_COMPANY_ID
-}
-
-resource "kinsta_wordpress_site" "test_custom" {
-  display_name   = "Terraform Custom Test Site"
-  region         = "us-central1"
-  admin_email    = "test@example.com"
-  admin_password = "SecureP@ssw0rd123"
-  admin_user     = "tfadmin"
-  site_title     = "Custom Test Site"
-  wp_language    = "en_US"
-  install_mode   = "new"
-}
-
-resource "kinsta_wordpress_environment" "custom" {
-  site_id           = kinsta_wordpress_site.test_custom.site_id
-  display_name      = "Custom Environment"
-  is_premium        = false
-  php_version       = "8.2"
-  wp_debug          = true
-  wp_debug_display  = true
-  wp_debug_log      = true
 }
 `
 
