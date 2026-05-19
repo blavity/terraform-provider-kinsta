@@ -827,3 +827,83 @@ func TestPollOperation_EnvironmentID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expectedEnvID, envID)
 }
+
+// Principle IV: credentials MUST NOT appear in any returned error string.
+// A regression like fmt.Errorf("API error for key %s: %s", c.apiKey, status)
+// would silently expose the bearer token in every error a user sees.
+func TestClient_NoCredentialLeakInErrors(t *testing.T) {
+	const apiKey = "kinsta-api-key-sentinel-xyz"
+	const adminPassword = "admin-password-sentinel-abc"
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"message": "internal error"}`))
+	}))
+	defer server.Close()
+
+	c := &Client{
+		apiKey:     apiKey,
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	cases := []struct {
+		name string
+		call func() error
+	}{
+		{"CreateWordPressSite", func() error {
+			_, err := c.CreateWordPressSite(context.Background(), &CreateWordPressSiteRequest{
+				DisplayName:   "Test",
+				AdminPassword: adminPassword,
+			})
+			return err
+		}},
+		{"GetWordPressSite", func() error {
+			_, err := c.GetWordPressSite(context.Background(), "site-id")
+			return err
+		}},
+		{"GetWordPressSites", func() error {
+			_, err := c.GetWordPressSites(context.Background())
+			return err
+		}},
+		{"DeleteWordPressSite", func() error {
+			_, err := c.DeleteWordPressSite(context.Background(), "site-id")
+			return err
+		}},
+		{"CreateWordPressEnvironment", func() error {
+			_, err := c.CreateWordPressEnvironment(context.Background(), "site-id", &CreateWordPressEnvironmentRequest{
+				DisplayName:   "staging",
+				AdminPassword: adminPassword,
+			})
+			return err
+		}},
+		{"GetWordPressEnvironment", func() error {
+			_, err := c.GetWordPressEnvironment(context.Background(), "site-id", "env-id")
+			return err
+		}},
+		{"DeleteWordPressEnvironment", func() error {
+			_, err := c.DeleteWordPressEnvironment(context.Background(), "env-id")
+			return err
+		}},
+		{"PollOperation", func() error {
+			// PollOperation will exhaust its 6-attempt 404 grace then return — but
+			// since the server returns 500 (not 404), the very first attempt is
+			// a non-retryable error path. Cap the call with a context to avoid
+			// any unintended waits.
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			_, err := c.PollOperation(ctx, "op-id")
+			return err
+		}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.call()
+			require.Error(t, err)
+			assert.NotContains(t, err.Error(), apiKey, "API key leaked into error: %s", err.Error())
+			assert.NotContains(t, err.Error(), adminPassword, "admin password leaked into error: %s", err.Error())
+		})
+	}
+}
