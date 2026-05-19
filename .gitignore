@@ -48,6 +48,9 @@ swagger.json
 dist/
 registry/
 coverage/
+coverage.out
+coverage.html
+coverage.xml
 
 # GPG and signing artifacts (keep keys out of git)
 *.asc
