@@ -14,7 +14,6 @@ func resourceWordPressSite() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceWordPressSiteCreate,
 		ReadContext:   resourceWordPressSiteRead,
-		UpdateContext: resourceWordPressSiteUpdate,
 		DeleteContext: resourceWordPressSiteDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -228,11 +227,6 @@ func resourceWordPressSiteRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	return nil
-}
-
-func resourceWordPressSiteUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	// Updates are not supported; all fields are ForceNew
-	return diag.Errorf("kinsta_wordpress_site does not support updates; all fields are immutable and require resource replacement")
 }
 
 func resourceWordPressSiteDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
