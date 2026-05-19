@@ -1,0 +1,46 @@
+# PR Title Linter
+#
+# Enforces conventional-commit format on PR titles. Squash-merge is the only
+# strategy used here, so the PR title becomes the single commit subject on
+# main — and GoReleaser parses those subjects to group release notes. A
+# non-conventional title silently lands in "Miscellaneous" and hides the
+# change from users.
+#
+# All PR-title content is consumed by the action via the github event
+# payload; nothing is interpolated into shell `run:` steps here, so the
+# title is treated as data the action parses, not as code.
+
+name: PR Title
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            chore
+            docs
+            test
+            refactor
+            ci
+            build
+            perf
+            style
+            revert
+          requireScope: false
+          subjectPattern: ^[A-Za-z].+$
+          subjectPatternError: |
+            The subject of the PR title must start with a letter
+            (no leading symbols, no empty subject).
