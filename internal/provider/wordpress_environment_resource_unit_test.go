@@ -432,10 +432,13 @@ func Test_resourceWordPressEnvironment_Schema(t *testing.T) {
 		assert.Equal(t, schema.TypeBool, resource.Schema["is_premium"].Type)
 	})
 
-	t.Run("importer is wired with custom state context", func(t *testing.T) {
+	t.Run("importer is wired", func(t *testing.T) {
+		// Schema-level: just confirm an importer is registered. The
+		// behavioral check that it's the custom site_id:env_id parser
+		// (and not the SDK's passthrough — which would silently accept
+		// "no-colon-here") lives in Test_resourceWordPressEnvironmentImport,
+		// which exercises both the happy path and rejects malformed input.
 		require.NotNil(t, resource.Importer, "Principle III requires terraform import to work")
-		// Environments use a custom importer (site_id:env_id format), not the
-		// SDK's passthrough — so StateContext must be set to a non-default fn.
 		require.NotNil(t, resource.Importer.StateContext, "import state context must be set")
 	})
 

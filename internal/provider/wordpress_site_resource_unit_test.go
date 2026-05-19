@@ -378,18 +378,18 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	// support — a breaking change disguised as a non-breaking one.
 	// This test pins the contract so the next person to touch the
 	// schema must consciously update the assertion list.
-	t.Run("all non-computed fields are ForceNew", func(t *testing.T) {
-		// Computed-only outputs (no user-facing input) are exempt.
-		computedOnly := map[string]bool{
-			"site_id":        true,
-			"environment_id": true,
-		}
+	t.Run("all configurable fields are ForceNew", func(t *testing.T) {
+		// Detect "configurable" fields dynamically: anything Optional or
+		// Required (i.e., user-settable). Pure computed outputs (no user
+		// input) are exempt. Detecting dynamically (rather than via a
+		// hardcoded skip list) means a future Optional+Computed promotion
+		// of e.g. `site_id` would still be checked against ForceNew.
 		for name, fieldSchema := range resource.Schema {
-			if computedOnly[name] {
+			if !fieldSchema.Optional && !fieldSchema.Required {
 				continue
 			}
 			assert.True(t, fieldSchema.ForceNew,
-				"Field %s must be ForceNew: removing ForceNew is a Principle II breaking change",
+				"Field %s must be ForceNew: removing ForceNew on a settable field is a Principle II breaking change",
 				name)
 		}
 	})
