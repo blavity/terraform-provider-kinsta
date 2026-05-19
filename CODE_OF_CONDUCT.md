@@ -19,8 +19,6 @@ To report behavior you believe violates the Code of Conduct, use one of these Gi
 - **Direct message a maintainer on GitHub.** Maintainers are listed on the repo's [Insights → People](https://github.com/blavity/terraform-provider-kinsta/graphs/contributors) page — pick anyone with the *Maintain* or *Admin* role.
 - **Report the offending content to GitHub.** Use the **Report abuse** option on the specific issue, PR, comment, or commit. GitHub routes the report to both Trust & Safety and the repo's owners.
 
-Reports sent via GitHub DM are acknowledged privately within 5 business days.
-
 For security vulnerabilities (not conduct concerns), use [GitHub Security Advisories](https://github.com/blavity/terraform-provider-kinsta/security/advisories/new) instead — see [SECURITY.md](SECURITY.md).
 
 ## Why a URL reference
