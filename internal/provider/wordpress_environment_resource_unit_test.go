@@ -432,6 +432,46 @@ func Test_resourceWordPressEnvironment_Schema(t *testing.T) {
 	t.Run("is_premium is TypeBool", func(t *testing.T) {
 		assert.Equal(t, schema.TypeBool, resource.Schema["is_premium"].Type)
 	})
+
+	t.Run("importer is wired", func(t *testing.T) {
+		// Schema-level: just confirm an importer is registered. The
+		// behavioral check that it's the custom site_id:env_id parser
+		// (and not the SDK's passthrough — which would silently accept
+		// "no-colon-here") lives in Test_resourceWordPressEnvironmentImport,
+		// which exercises both the happy path and rejects malformed input.
+		require.NotNil(t, resource.Importer, "Principle III requires terraform import to work")
+		require.NotNil(t, resource.Importer.StateContext, "import state context must be set")
+	})
+
+	t.Run("timeouts are configured for create and delete", func(t *testing.T) {
+		require.NotNil(t, resource.Timeouts)
+		require.NotNil(t, resource.Timeouts.Create, "create timeout must be set (Principle III async polling)")
+		require.NotNil(t, resource.Timeouts.Delete, "delete timeout must be set (Principle III async polling)")
+	})
+
+	// Principle II: pinning the exact set of fields the resource exposes.
+	// Adding, removing, or renaming a field changes this list; the next
+	// person touching it must update the assertion and explicitly state
+	// the semver impact.
+	t.Run("schema field set is locked", func(t *testing.T) {
+		expected := []string{
+			"site_id",
+			"display_name",
+			"site_title",
+			"is_premium",
+			"admin_email",
+			"admin_password",
+			"admin_user",
+			"wp_language",
+			"environment_id",
+		}
+		assert.Len(t, resource.Schema, len(expected),
+			"unexpected number of schema fields; adding/removing fields is a Principle II event")
+		for _, field := range expected {
+			_, ok := resource.Schema[field]
+			assert.True(t, ok, "expected schema field missing: %s", field)
+		}
+	})
 }
 
 func Test_resourceWordPressEnvironmentCreate_RequestValidation(t *testing.T) {

@@ -371,6 +371,68 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 			}
 		}
 	})
+
+	// Principle II: every non-Computed schema field on this resource is
+	// ForceNew. Removing ForceNew on any of them would silently allow
+	// in-place "updates" that the underlying API does not actually
+	// support — a breaking change disguised as a non-breaking one.
+	// This test pins the contract so the next person to touch the
+	// schema must consciously update the assertion list.
+	t.Run("all configurable fields are ForceNew", func(t *testing.T) {
+		// Detect "configurable" fields dynamically: anything Optional or
+		// Required (i.e., user-settable). Pure computed outputs (no user
+		// input) are exempt. Detecting dynamically (rather than via a
+		// hardcoded skip list) means a future Optional+Computed promotion
+		// of e.g. `site_id` would still be checked against ForceNew.
+		for name, fieldSchema := range resource.Schema {
+			if !fieldSchema.Optional && !fieldSchema.Required {
+				continue
+			}
+			assert.True(t, fieldSchema.ForceNew,
+				"Field %s must be ForceNew: removing ForceNew on a settable field is a Principle II breaking change",
+				name)
+		}
+	})
+
+	t.Run("importer is wired with passthrough state context", func(t *testing.T) {
+		require.NotNil(t, resource.Importer, "Principle III requires terraform import to work")
+		assert.NotNil(t, resource.Importer.StateContext, "import state context must be set")
+	})
+
+	t.Run("timeouts are configured for create and delete", func(t *testing.T) {
+		require.NotNil(t, resource.Timeouts)
+		require.NotNil(t, resource.Timeouts.Create, "create timeout must be set (Principle III async polling)")
+		require.NotNil(t, resource.Timeouts.Delete, "delete timeout must be set (Principle III async polling)")
+	})
+
+	// Principle II: pinning the exact set of fields the resource exposes.
+	// Adding, removing, or renaming a field changes this list; the next
+	// person touching it must update the assertion and explicitly state
+	// the semver impact.
+	t.Run("schema field set is locked", func(t *testing.T) {
+		expected := []string{
+			"display_name",
+			"region",
+			"admin_email",
+			"admin_password",
+			"admin_user",
+			"site_title",
+			"install_mode",
+			"wp_language",
+			"is_multisite",
+			"is_subdomain_multisite",
+			"woocommerce",
+			"wordpressseo",
+			"site_id",
+			"environment_id",
+		}
+		assert.Len(t, resource.Schema, len(expected),
+			"unexpected number of schema fields; adding/removing fields is a Principle II event")
+		for _, field := range expected {
+			_, ok := resource.Schema[field]
+			assert.True(t, ok, "expected schema field missing: %s", field)
+		}
+	})
 }
 
 func Test_resourceWordPressSiteCreate_RequestValidation(t *testing.T) {
