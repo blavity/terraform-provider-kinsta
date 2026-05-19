@@ -301,9 +301,18 @@ func Test_resourceWordPressEnvironmentRead(t *testing.T) {
 }
 
 func Test_resourceWordPressEnvironmentRead_Error(t *testing.T) {
+	// resourceWordPressEnvironmentRead calls GetWordPressSite (not
+	// GetWordPressEnvironment) to find the env in the site's environments
+	// list — the individual environment GET endpoint returns 404 for env
+	// IDs that exist within a site. Failing GetWordPressSite is the only
+	// way to exercise the Read error path. A previous version of this
+	// test failed GetWordPressEnvironment, which is never called, so the
+	// test passed only because of the mock's default fallback — not
+	// because it covered the intended code path.
+	wantErr := errors.New("failed to get WordPress site")
 	mockClient := &mockWordPressEnvironmentKinstaClient{
-		getWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
-			return nil, errors.New("failed to get WordPress environment")
+		getWordPressSite: func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
+			return nil, wantErr
 		},
 	}
 
@@ -314,7 +323,8 @@ func Test_resourceWordPressEnvironmentRead_Error(t *testing.T) {
 
 	diags := resourceWordPressEnvironmentRead(context.Background(), d, mockClient)
 
-	assert.True(t, diags.HasError())
+	require.True(t, diags.HasError(), "Read must surface the underlying GetWordPressSite error")
+	assert.Contains(t, diags[0].Summary, wantErr.Error(), "diagnostic must contain the underlying error string")
 }
 
 func Test_resourceWordPressEnvironmentDelete(t *testing.T) {
