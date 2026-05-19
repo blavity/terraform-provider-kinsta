@@ -48,3 +48,21 @@ func Test_providerConfigure_Valid(t *testing.T) {
 	assert.False(t, diags.HasError())
 	assert.NotNil(t, client)
 }
+
+// Principle IV: KINSTA_API_KEY and KINSTA_COMPANY_ID are the only sanctioned
+// ambient credential sources. A typo in either env-var name would silently
+// break the documented contract.
+func Test_Provider_EnvDefaults(t *testing.T) {
+	t.Setenv("KINSTA_API_KEY", "env-api-key-sentinel")
+	t.Setenv("KINSTA_COMPANY_ID", "env-company-id-sentinel")
+
+	p := Provider()
+
+	apiKeyDefault, err := p.Schema["api_key"].DefaultFunc()
+	require.NoError(t, err)
+	assert.Equal(t, "env-api-key-sentinel", apiKeyDefault, "api_key must read from KINSTA_API_KEY")
+
+	companyIDDefault, err := p.Schema["company_id"].DefaultFunc()
+	require.NoError(t, err)
+	assert.Equal(t, "env-company-id-sentinel", companyIDDefault, "company_id must read from KINSTA_COMPANY_ID")
+}
