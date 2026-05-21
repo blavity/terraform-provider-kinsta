@@ -20,7 +20,7 @@ func TestAcc_ResourceWordPressSite_Basic(t *testing.T) {
 
 	name := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
@@ -50,7 +50,7 @@ func TestAcc_ResourceWordPressSite_CustomLanguage(t *testing.T) {
 
 	name := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
@@ -74,7 +74,7 @@ func TestAcc_ResourceWordPressSite_MigrateMode(t *testing.T) {
 
 	name := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
@@ -97,7 +97,7 @@ func TestAcc_ResourceWordPressSite_Multisite(t *testing.T) {
 
 	name := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
@@ -124,7 +124,7 @@ func TestAcc_ResourceWordPressSite_PlainMode(t *testing.T) {
 
 	name := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
@@ -147,7 +147,7 @@ func TestAcc_ResourceWordPressSite_Import(t *testing.T) {
 
 	name := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
@@ -181,7 +181,7 @@ func TestAcc_ResourceWordPressSite_ForceNew(t *testing.T) {
 
 	var firstSiteID string
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),

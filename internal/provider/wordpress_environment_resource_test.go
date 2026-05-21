@@ -21,7 +21,7 @@ func TestAcc_ResourceWordPressEnvironment_Basic(t *testing.T) {
 	siteName := acctest.RandomWithPrefix(testAccNamePrefix)
 	envName := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		// Env acceptance configs also create a kinsta_wordpress_site —
@@ -54,7 +54,7 @@ func TestAcc_ResourceWordPressEnvironment_Premium(t *testing.T) {
 	siteName := acctest.RandomWithPrefix(testAccNamePrefix)
 	envName := acctest.RandomWithPrefix(testAccNamePrefix)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
 		// Env acceptance configs also create a kinsta_wordpress_site —
