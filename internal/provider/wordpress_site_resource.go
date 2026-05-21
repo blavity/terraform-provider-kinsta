@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
@@ -86,11 +87,19 @@ func resourceWordPressSite() *schema.Resource {
 			},
 			// Optional fields with defaults (safe after import)
 			"install_mode": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "new",
-				ForceNew:    true,
-				Description: "WordPress installation mode. Currently only `new` is supported.",
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "new",
+				ForceNew: true,
+				// `clone` is omitted: the upstream API still accepts it but
+				// documents it as deprecated. We surface only the supported
+				// modes and let any future upstream additions roll through
+				// without a provider-side allowlist change.
+				ValidateFunc: validation.StringInSlice([]string{"new", "plain"}, false),
+				Description: "WordPress installation mode. " +
+					"`new` (default) provisions the full WordPress install template — default theme, sample content, and the admin user from `admin_user`/`admin_email`/`admin_password`. " +
+					"`plain` creates an empty WordPress container with no install template (matches the \"Empty site\" option in the MyKinsta UI), suitable for sites whose contents are pushed by a downstream pipeline (e.g., Bedrock). " +
+					"Write-only credentials are still sent in both modes and apply once content lands.",
 			},
 			"wp_language": {
 				Type:        schema.TypeString,

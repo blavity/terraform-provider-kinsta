@@ -409,6 +409,20 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	// Adding, removing, or renaming a field changes this list; the next
 	// person touching it must update the assertion and explicitly state
 	// the semver impact.
+	t.Run("install_mode accepts new and plain, rejects others", func(t *testing.T) {
+		validate := resource.Schema["install_mode"].ValidateFunc
+		require.NotNil(t, validate, "install_mode must declare a ValidateFunc so invalid values surface at plan time")
+
+		for _, ok := range []string{"new", "plain"} {
+			_, errs := validate(ok, "install_mode")
+			assert.Empty(t, errs, "install_mode = %q must be accepted", ok)
+		}
+		for _, bad := range []string{"clone", "new ", "NEW", "", "Plain"} {
+			_, errs := validate(bad, "install_mode")
+			assert.NotEmpty(t, errs, "install_mode = %q must be rejected", bad)
+		}
+	})
+
 	t.Run("schema field set is locked", func(t *testing.T) {
 		expected := []string{
 			"display_name",

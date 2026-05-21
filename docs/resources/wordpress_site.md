@@ -39,7 +39,7 @@ resource "kinsta_wordpress_site" "example" {
 - `admin_email` (String, Sensitive) Email address for the WordPress admin account. Write-only: not returned by the API after creation.
 - `admin_password` (String, Sensitive) Password for the WordPress admin account. Write-only: not returned by the API after creation.
 - `admin_user` (String) Username for the WordPress admin account. Write-only: not returned by the API after creation.
-- `install_mode` (String) WordPress installation mode. Currently only `new` is supported.
+- `install_mode` (String) WordPress installation mode. `new` (default) provisions the full WordPress install template — default theme, sample content, and the admin user from `admin_user`/`admin_email`/`admin_password`. `plain` creates an empty WordPress container with no install template (matches the "Empty site" option in the MyKinsta UI), suitable for sites whose contents are pushed by a downstream pipeline (e.g., Bedrock). Write-only credentials are still sent in both modes and apply once content lands.
 - `is_multisite` (Boolean) Enable WordPress Multisite. Cannot be read back from the API after creation.
 - `is_subdomain_multisite` (Boolean) Use subdomain-based multisite instead of subdirectory multisite. Only applies when `is_multisite` is `true`. Cannot be read back from the API after creation.
 - `region` (String) Data center region where the site is hosted (e.g., `us-central1`, `europe-west1`). See the [Kinsta API docs](https://api-docs.kinsta.com) for the full list of supported regions. Write-only: not returned by the API after creation.
