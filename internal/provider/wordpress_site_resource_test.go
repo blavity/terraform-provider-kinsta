@@ -1,12 +1,16 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/blavity/terraform-provider-kinsta/internal/client"
 )
 
 func TestAcc_ResourceWordPressSite_Basic(t *testing.T) {
@@ -14,18 +18,21 @@ func TestAcc_ResourceWordPressSite_Basic(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	name := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfig,
+				Config: testAccResourceWordPressSiteConfig(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test"),
-					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "display_name", "Terraform Test Site"),
+					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "display_name", name),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "region", "us-central1"),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "admin_user", "tfadmin"),
-					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "site_title", "Terraform Test Site"),
+					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "site_title", name),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "wp_language", "en_US"),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "install_mode", "new"),
 					resource.TestCheckResourceAttrSet("kinsta_wordpress_site.test", "site_id"),
@@ -41,12 +48,15 @@ func TestAcc_ResourceWordPressSite_CustomLanguage(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	name := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfigCustomLanguage,
+				Config: testAccResourceWordPressSiteConfigCustomLanguage(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test_fr"),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test_fr", "wp_language", "fr_FR"),
@@ -62,12 +72,15 @@ func TestAcc_ResourceWordPressSite_MigrateMode(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	name := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfigMigrate,
+				Config: testAccResourceWordPressSiteConfigMigrate(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test_migrate"),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test_migrate", "install_mode", "migrate"),
@@ -77,69 +90,20 @@ func TestAcc_ResourceWordPressSite_MigrateMode(t *testing.T) {
 	})
 }
 
-const testAccResourceWordPressSiteConfig = `
-provider "kinsta" {
-  # API key and company ID should be set via environment variables:
-  # KINSTA_API_KEY and KINSTA_COMPANY_ID
-}
-
-resource "kinsta_wordpress_site" "test" {
-  display_name   = "Terraform Test Site"
-  region         = "us-central1"
-  admin_email    = "test@example.com"
-  admin_password = "SecureP@ssw0rd123"
-  admin_user     = "tfadmin"
-  site_title     = "Terraform Test Site"
-  wp_language    = "en_US"
-  install_mode   = "new"
-}
-`
-
-const testAccResourceWordPressSiteConfigCustomLanguage = `
-provider "kinsta" {
-  # API key and company ID should be set via environment variables:
-  # KINSTA_API_KEY and KINSTA_COMPANY_ID
-}
-
-resource "kinsta_wordpress_site" "test_fr" {
-  display_name   = "Site de test Terraform"
-  region         = "europe-west1"
-  admin_email    = "test@example.com"
-  admin_password = "SecureP@ssw0rd123"
-  admin_user     = "tfadmin"
-  site_title     = "Site de test Terraform"
-  wp_language    = "fr_FR"
-}
-`
-
-const testAccResourceWordPressSiteConfigMigrate = `
-provider "kinsta" {
-  # API key and company ID should be set via environment variables:
-  # KINSTA_API_KEY and KINSTA_COMPANY_ID
-}
-
-resource "kinsta_wordpress_site" "test_migrate" {
-  display_name   = "Terraform Migrate Test"
-  region         = "us-central1"
-  admin_email    = "test@example.com"
-  admin_password = "SecureP@ssw0rd123"
-  admin_user     = "tfadmin"
-  site_title     = "Terraform Migrate Test"
-  install_mode   = "migrate"
-}
-`
-
 func TestAcc_ResourceWordPressSite_Multisite(t *testing.T) {
 	if os.Getenv("TF_ACC") == "" {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	name := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfigMultisite,
+				Config: testAccResourceWordPressSiteConfigMultisite(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test_multisite"),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test_multisite", "is_multisite", "true"),
@@ -158,12 +122,15 @@ func TestAcc_ResourceWordPressSite_PlainMode(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	name := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfigPlain,
+				Config: testAccResourceWordPressSiteConfigPlain(name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test_plain"),
 					resource.TestCheckResourceAttr("kinsta_wordpress_site.test_plain", "install_mode", "plain"),
@@ -178,12 +145,15 @@ func TestAcc_ResourceWordPressSite_Import(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	name := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfig,
+				Config: testAccResourceWordPressSiteConfig(name),
 				Check:  testAccCheckWordPressSiteExists("kinsta_wordpress_site.test"),
 			},
 			{
@@ -206,14 +176,18 @@ func TestAcc_ResourceWordPressSite_ForceNew(t *testing.T) {
 		t.Skip("Acceptance tests skipped unless env 'TF_ACC' is set")
 	}
 
+	firstName := acctest.RandomWithPrefix(testAccNamePrefix)
+	secondName := acctest.RandomWithPrefix(testAccNamePrefix)
+
 	var firstSiteID string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testAccCheckWordPressSiteDestroy(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceWordPressSiteConfig,
+				Config: testAccResourceWordPressSiteConfig(firstName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test"),
 					resource.TestCheckResourceAttrWith("kinsta_wordpress_site.test", "site_id", func(v string) error {
@@ -223,7 +197,7 @@ func TestAcc_ResourceWordPressSite_ForceNew(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccResourceWordPressSiteConfigForceNew,
+				Config: testAccResourceWordPressSiteConfig(secondName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWordPressSiteExists("kinsta_wordpress_site.test"),
 					resource.TestCheckResourceAttrWith("kinsta_wordpress_site.test", "site_id", func(v string) error {
@@ -232,57 +206,99 @@ func TestAcc_ResourceWordPressSite_ForceNew(t *testing.T) {
 						}
 						return nil
 					}),
-					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "display_name", "Terraform ForceNew Test"),
+					resource.TestCheckResourceAttr("kinsta_wordpress_site.test", "display_name", secondName),
 				),
 			},
 		},
 	})
 }
 
-const testAccResourceWordPressSiteConfigMultisite = `
-provider "kinsta" {}
-
-resource "kinsta_wordpress_site" "test_multisite" {
-  display_name          = "Terraform Multisite Test"
-  region                = "us-central1"
-  admin_email           = "test@example.com"
-  admin_password        = "SecureP@ssw0rd123"
-  admin_user            = "tfadmin"
-  site_title            = "Terraform Multisite Test"
-  is_multisite          = true
-  is_subdomain_multisite = false
-  woocommerce           = true
-  wordpressseo          = true
-}
-`
-
-const testAccResourceWordPressSiteConfigPlain = `
-provider "kinsta" {}
-
-resource "kinsta_wordpress_site" "test_plain" {
-  display_name   = "Terraform Plain Mode Test"
-  region         = "us-central1"
-  admin_email    = "test@example.com"
-  admin_password = "SecureP@ssw0rd123"
-  admin_user     = "tfadmin"
-  site_title     = "Terraform Plain Mode Test"
-  install_mode   = "plain"
-}
-`
-
-const testAccResourceWordPressSiteConfigForceNew = `
+// Config builders. Each takes a randomized name (prefixed `tf-acc-test`) so
+// parallel runs and incomplete cleanups can't collide on display_name —
+// MyKinsta rejects duplicates within a company.
+func testAccResourceWordPressSiteConfig(name string) string {
+	return fmt.Sprintf(`
 provider "kinsta" {}
 
 resource "kinsta_wordpress_site" "test" {
-  display_name   = "Terraform ForceNew Test"
+  display_name   = %[1]q
   region         = "us-central1"
   admin_email    = "test@example.com"
   admin_password = "SecureP@ssw0rd123"
   admin_user     = "tfadmin"
-  site_title     = "Terraform ForceNew Test"
+  site_title     = %[1]q
+  wp_language    = "en_US"
   install_mode   = "new"
 }
-`
+`, name)
+}
+
+func testAccResourceWordPressSiteConfigCustomLanguage(name string) string {
+	return fmt.Sprintf(`
+provider "kinsta" {}
+
+resource "kinsta_wordpress_site" "test_fr" {
+  display_name   = %[1]q
+  region         = "europe-west1"
+  admin_email    = "test@example.com"
+  admin_password = "SecureP@ssw0rd123"
+  admin_user     = "tfadmin"
+  site_title     = %[1]q
+  wp_language    = "fr_FR"
+}
+`, name)
+}
+
+func testAccResourceWordPressSiteConfigMigrate(name string) string {
+	return fmt.Sprintf(`
+provider "kinsta" {}
+
+resource "kinsta_wordpress_site" "test_migrate" {
+  display_name   = %[1]q
+  region         = "us-central1"
+  admin_email    = "test@example.com"
+  admin_password = "SecureP@ssw0rd123"
+  admin_user     = "tfadmin"
+  site_title     = %[1]q
+  install_mode   = "migrate"
+}
+`, name)
+}
+
+func testAccResourceWordPressSiteConfigMultisite(name string) string {
+	return fmt.Sprintf(`
+provider "kinsta" {}
+
+resource "kinsta_wordpress_site" "test_multisite" {
+  display_name           = %[1]q
+  region                 = "us-central1"
+  admin_email            = "test@example.com"
+  admin_password         = "SecureP@ssw0rd123"
+  admin_user             = "tfadmin"
+  site_title             = %[1]q
+  is_multisite           = true
+  is_subdomain_multisite = false
+  woocommerce            = true
+  wordpressseo           = true
+}
+`, name)
+}
+
+func testAccResourceWordPressSiteConfigPlain(name string) string {
+	return fmt.Sprintf(`
+provider "kinsta" {}
+
+resource "kinsta_wordpress_site" "test_plain" {
+  display_name   = %[1]q
+  region         = "us-central1"
+  admin_email    = "test@example.com"
+  admin_password = "SecureP@ssw0rd123"
+  admin_user     = "tfadmin"
+  site_title     = %[1]q
+  install_mode   = "plain"
+}
+`, name)
+}
 
 func testAccCheckWordPressSiteExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -300,6 +316,37 @@ func testAccCheckWordPressSiteExists(name string) resource.TestCheckFunc {
 			return fmt.Errorf("site_id is not set")
 		}
 
+		return nil
+	}
+}
+
+// testAccCheckWordPressSiteDestroy verifies that every kinsta_wordpress_site
+// in the post-test state has actually been removed from the MyKinsta API.
+// Hits the live API with the credentials from KINSTA_API_KEY /
+// KINSTA_COMPANY_ID (validated by testAccPreCheck).
+func testAccCheckWordPressSiteDestroy(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		t.Helper()
+		c := testAccClient(t)
+		ctx := context.Background()
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "kinsta_wordpress_site" {
+				continue
+			}
+			id := rs.Primary.ID
+			if id == "" {
+				continue
+			}
+
+			_, err := c.GetWordPressSite(ctx, id)
+			if err == nil {
+				return fmt.Errorf("kinsta_wordpress_site %s still exists after destroy", id)
+			}
+			if !client.IsNotFound(err) {
+				return fmt.Errorf("unexpected error verifying destroy of site %s: %w", id, err)
+			}
+		}
 		return nil
 	}
 }
