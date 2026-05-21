@@ -65,6 +65,12 @@ func sweepWordPressSites(_ string) error {
 			continue
 		}
 		if _, err := c.DeleteWordPressSite(ctx, site.ID); err != nil {
+			// 404 = already gone (e.g., parallel sweep, manual cleanup,
+			// or the env sweeper just deleted the parent). Idempotent
+			// behavior keeps the sweep working under contention.
+			if client.IsNotFound(err) {
+				continue
+			}
 			// Collect and continue: a single failure shouldn't strand other
 			// orphans waiting for a future sweep run.
 			if firstErr == nil {
@@ -82,10 +88,11 @@ func sweepWordPressEnvironments(_ string) error {
 	}
 	ctx := context.Background()
 
-	// The site-list response doesn't include nested environments, so we have
-	// to fan out to GetWordPressSite per site. Only sites that themselves
-	// look like test orphans need scanning — production sites with hand-made
-	// test envs (rare) won't be matched, which is the safer default.
+	// Site-list responses don't include nested envs, so we fan out via
+	// GetWordPressSite — but only for sites that already look like test
+	// orphans. This keeps the fan-out proportional to test debris rather
+	// than to total company size and avoids touching production sites
+	// that happen to live in the same company.
 	sitesResp, err := c.GetWordPressSites(ctx)
 	if err != nil {
 		return fmt.Errorf("listing WordPress sites: %w", err)
@@ -93,8 +100,16 @@ func sweepWordPressEnvironments(_ string) error {
 
 	var firstErr error
 	for _, listSite := range sitesResp.Company.Sites {
+		if !strings.HasPrefix(listSite.DisplayName, testAccNamePrefix) {
+			continue
+		}
 		siteResp, err := c.GetWordPressSite(ctx, listSite.ID)
 		if err != nil {
+			// Site already gone (e.g., parallel sweep or manual cleanup):
+			// nothing to do for its envs.
+			if client.IsNotFound(err) {
+				continue
+			}
 			if firstErr == nil {
 				firstErr = fmt.Errorf("getting site %s: %w", listSite.ID, err)
 			}
@@ -110,6 +125,9 @@ func sweepWordPressEnvironments(_ string) error {
 				continue
 			}
 			if _, err := c.DeleteWordPressEnvironment(ctx, env.ID); err != nil {
+				if client.IsNotFound(err) {
+					continue
+				}
 				if firstErr == nil {
 					firstErr = fmt.Errorf("deleting env %s (%s): %w", env.DisplayName, env.ID, err)
 				}
