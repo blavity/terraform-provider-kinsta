@@ -91,15 +91,18 @@ func resourceWordPressSite() *schema.Resource {
 				Optional: true,
 				Default:  "new",
 				ForceNew: true,
-				// `clone` is omitted: the upstream API still accepts it but
-				// documents it as deprecated. We surface only the supported
-				// modes and let any future upstream additions roll through
-				// without a provider-side allowlist change.
-				ValidateFunc: validation.StringInSlice([]string{"new", "plain"}, false),
+				// Explicit allowlist surfaces typos and unsupported values at
+				// plan time. `clone` is intentionally excluded — the upstream
+				// API still accepts it but documents it as deprecated, so we
+				// don't expose it. Future upstream additions will require a
+				// matching entry here: a deliberate, reviewable change
+				// rather than silent passthrough.
+				ValidateFunc: validation.StringInSlice([]string{"new", "plain", "migrate"}, false),
 				Description: "WordPress installation mode. " +
 					"`new` (default) provisions the full WordPress install template — default theme, sample content, and the admin user from `admin_user`/`admin_email`/`admin_password`. " +
 					"`plain` creates an empty WordPress container with no install template (matches the \"Empty site\" option in the MyKinsta UI), suitable for sites whose contents are pushed by a downstream pipeline (e.g., Bedrock). " +
-					"Write-only credentials are still sent in both modes and apply once content lands.",
+					"`migrate` provisions an empty container in preparation for a migration request submitted via the MyKinsta UI; the migration flow itself is out of scope for this provider. " +
+					"Write-only credentials are still sent in all modes and apply once content lands.",
 			},
 			"wp_language": {
 				Type:        schema.TypeString,

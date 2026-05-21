@@ -409,14 +409,17 @@ func Test_resourceWordPressSite_Schema(t *testing.T) {
 	// Adding, removing, or renaming a field changes this list; the next
 	// person touching it must update the assertion and explicitly state
 	// the semver impact.
-	t.Run("install_mode accepts new and plain, rejects others", func(t *testing.T) {
+	t.Run("install_mode allowlist is {new, plain, migrate}", func(t *testing.T) {
 		validate := resource.Schema["install_mode"].ValidateFunc
 		require.NotNil(t, validate, "install_mode must declare a ValidateFunc so invalid values surface at plan time")
 
-		for _, ok := range []string{"new", "plain"} {
+		for _, ok := range []string{"new", "plain", "migrate"} {
 			_, errs := validate(ok, "install_mode")
 			assert.Empty(t, errs, "install_mode = %q must be accepted", ok)
 		}
+		// `clone` is the upstream-deprecated mode; we deliberately reject it.
+		// Empty / whitespace / case variants must also be rejected so typos
+		// don't silently pass through.
 		for _, bad := range []string{"clone", "new ", "NEW", "", "Plain"} {
 			_, errs := validate(bad, "install_mode")
 			assert.NotEmpty(t, errs, "install_mode = %q must be rejected", bad)
