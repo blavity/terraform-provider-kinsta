@@ -24,7 +24,13 @@ func TestAcc_ResourceWordPressEnvironment_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckWordPressEnvironmentDestroy(t),
+		// Env acceptance configs also create a kinsta_wordpress_site —
+		// verify both kinds are gone after the test, otherwise a leaked
+		// site (the more expensive resource) goes unnoticed.
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckWordPressEnvironmentDestroy(t),
+			testAccCheckWordPressSiteDestroy(t),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceWordPressEnvironmentConfig(siteName, envName),
@@ -51,7 +57,13 @@ func TestAcc_ResourceWordPressEnvironment_Premium(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testAccCheckWordPressEnvironmentDestroy(t),
+		// Env acceptance configs also create a kinsta_wordpress_site —
+		// verify both kinds are gone after the test, otherwise a leaked
+		// site (the more expensive resource) goes unnoticed.
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckWordPressEnvironmentDestroy(t),
+			testAccCheckWordPressSiteDestroy(t),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceWordPressEnvironmentConfigPremium(siteName, envName),
