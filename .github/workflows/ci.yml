@@ -31,12 +31,16 @@ jobs:
           path: coverage.out
           retention-days: 1
 
-  # Coverage ratchet: vladopajic/go-test-coverage fetches main's coverage as a
-  # baseline and fails the PR if any package or the total drops. No committed
-  # threshold file needed — the action tracks the baseline automatically.
-  # Pure Go-native; no external service (Codecov/Coveralls) involved.
+  # Coverage floor: enforces a fixed minimum on total coverage and posts a
+  # PR comment with the breakdown. Pure Go-native; no external service
+  # (Codecov/Coveralls) involved.
+  #
+  # Threshold is a fixed floor (80%, current actual is ~93%). True
+  # "ratchet vs main" — never-go-backwards comparison — requires a separate
+  # workflow to publish main's breakdown.json and cross-workflow artifact
+  # sharing; tracked as a follow-up rather than blocking this PR.
   coverage:
-    name: Coverage (ratchet vs main)
+    name: Coverage (floor + PR comment)
     needs: test
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -57,8 +61,12 @@ jobs:
         uses: vladopajic/go-test-coverage@a93b868a4cbcbf18dc3781650fad241f0020e609 # v2.18.8
         with:
           profile: coverage.out
+          # PR comment via the action's built-in GITHUB_TOKEN poster.
+          # Intentionally NOT passing git-branch — that input triggers
+          # badge/breakdown writes back to a branch and needs
+          # contents: write, which we deny.
           git-token: ${{ secrets.GITHUB_TOKEN }}
-          git-branch: main
+          threshold-total: 80
 
   docs:
     name: Verify docs are in sync with schema
