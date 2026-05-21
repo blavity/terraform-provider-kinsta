@@ -270,8 +270,9 @@ func resourceWordPressEnvironmentUpdate(ctx context.Context, d *schema.ResourceD
 func resourceWordPressEnvironmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(client.KinstaClient)
 	id := d.Id()
+	siteID := d.Get("site_id").(string)
 
-	resp, err := c.DeleteWordPressEnvironment(ctx, id)
+	resp, err := c.DeleteWordPressEnvironment(ctx, siteID, id)
 	if err != nil {
 		return diag.FromErr(err)
 	}

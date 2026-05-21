@@ -124,7 +124,7 @@ func sweepWordPressEnvironments(_ string) error {
 			if env.Name == "live" {
 				continue
 			}
-			if _, err := c.DeleteWordPressEnvironment(ctx, env.ID); err != nil {
+			if _, err := c.DeleteWordPressEnvironment(ctx, listSite.ID, env.ID); err != nil {
 				if client.IsNotFound(err) {
 					continue
 				}

@@ -158,24 +158,44 @@ func resourceWordPressSite() *schema.Resource {
 func resourceWordPressSiteCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(client.KinstaClient)
 
-	req := &client.CreateWordPressSiteRequest{
-		Company:              c.CompanyID(),
-		DisplayName:          d.Get("display_name").(string),
-		Region:               d.Get("region").(string),
-		InstallMode:          d.Get("install_mode").(string),
-		AdminEmail:           d.Get("admin_email").(string),
-		AdminPassword:        d.Get("admin_password").(string),
-		AdminUser:            d.Get("admin_user").(string),
-		SiteTitle:            d.Get("site_title").(string),
-		WPLanguage:           d.Get("wp_language").(string),
-		IsMultisite:          d.Get("is_multisite").(bool),
-		IsSubdomainMultisite: d.Get("is_subdomain_multisite").(bool),
-		WooCommerce:          d.Get("woocommerce").(bool),
-		WordPressSEO:         d.Get("wordpressseo").(bool),
-	}
+	installMode := d.Get("install_mode").(string)
+	companyID := c.CompanyID()
+	displayName := d.Get("display_name").(string)
+	region := d.Get("region").(string)
 
-	// Create site (async operation)
-	resp, err := c.CreateWordPressSite(ctx, req)
+	// Spec note: POST /sites has two body shapes — `addWPSite-Body`
+	// (full install) and `addPlainWPSite-Body` (empty container, only
+	// company/display_name/region). install_mode = "plain" is selected
+	// by *which body we send*, not by passing install_mode = "plain"
+	// in the full body. Hybrid bodies risk being rejected by a
+	// spec-strict server, so we branch here.
+	var (
+		resp *client.CreateWordPressSiteResponse
+		err  error
+	)
+	if installMode == "plain" {
+		resp, err = c.CreatePlainWordPressSite(ctx, &client.CreatePlainWordPressSiteRequest{
+			Company:     companyID,
+			DisplayName: displayName,
+			Region:      region,
+		})
+	} else {
+		resp, err = c.CreateWordPressSite(ctx, &client.CreateWordPressSiteRequest{
+			Company:              companyID,
+			DisplayName:          displayName,
+			Region:               region,
+			InstallMode:          installMode,
+			AdminEmail:           d.Get("admin_email").(string),
+			AdminPassword:        d.Get("admin_password").(string),
+			AdminUser:            d.Get("admin_user").(string),
+			SiteTitle:            d.Get("site_title").(string),
+			WPLanguage:           d.Get("wp_language").(string),
+			IsMultisite:          d.Get("is_multisite").(bool),
+			IsSubdomainMultisite: d.Get("is_subdomain_multisite").(bool),
+			WooCommerce:          d.Get("woocommerce").(bool),
+			WordPressSEO:         d.Get("wordpressseo").(bool),
+		})
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,14 +210,17 @@ func resourceWordPressSiteCreate(ctx context.Context, d *schema.ResourceData, m 
 	d.SetId(siteID)
 
 	// Explicitly persist write-only fields — the API does not return these, so they
-	// must be saved from the request before Read is called (which would otherwise
-	// leave them empty in state for Optional+Computed fields).
+	// must be saved from the input before Read is called (which would otherwise
+	// leave them empty in state for Optional+Computed fields). In `plain`
+	// mode the admin/site_title fields aren't sent on the wire, but they may
+	// still be present in the configuration — preserve whatever the user
+	// declared so subsequent plans don't show a churn.
 	for k, v := range map[string]interface{}{
-		"region":         req.Region,
-		"admin_email":    req.AdminEmail,
-		"admin_password": req.AdminPassword,
-		"admin_user":     req.AdminUser,
-		"site_title":     req.SiteTitle,
+		"region":         region,
+		"admin_email":    d.Get("admin_email").(string),
+		"admin_password": d.Get("admin_password").(string),
+		"admin_user":     d.Get("admin_user").(string),
+		"site_title":     d.Get("site_title").(string),
 	} {
 		if err := d.Set(k, v); err != nil {
 			return diag.FromErr(err)
