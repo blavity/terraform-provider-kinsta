@@ -5,7 +5,12 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+    # Default trigger types (opened, synchronize, reopened) plus `labeled`
+    # so adding the `acceptance-test` label kicks off the gated acceptance
+    # job. Intentionally excludes `edited` and `unlabeled` — those would
+    # rerun the full pipeline on PR description tweaks and label removals
+    # for no useful coverage gain.
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 permissions:
