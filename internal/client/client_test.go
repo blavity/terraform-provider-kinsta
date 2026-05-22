@@ -462,6 +462,65 @@ func TestClient_CreateWordPressSite(t *testing.T) {
 	assert.Equal(t, 202, resp.Status)
 }
 
+// Plain-mode body shape: addPlainWPSite-Body per the OpenAPI spec
+// accepts only company, display_name, region. This test asserts the
+// request body sent on the wire has no admin_*, site_title, wp_language,
+// install_mode, or multisite/woocommerce/wordpressseo fields — a
+// hybrid shape risks rejection by a spec-strict server.
+func TestClient_CreatePlainWordPressSite_BodyShape(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "/sites", r.URL.Path)
+
+		// Decode into a permissive map so we can inspect *which* keys
+		// appear on the wire — strong-typed decoding would silently
+		// accept extras that we want to prove aren't present.
+		var raw map[string]json.RawMessage
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&raw))
+
+		// Strict shape check: exactly three keys, no more, no less. A
+		// permissive blacklist would still pass if an unrelated extra
+		// field were silently added to CreatePlainWordPressSiteRequest —
+		// asserting the full key set catches that regression too.
+		expected := []string{"company", "display_name", "region"}
+		assert.Equal(t, len(expected), len(raw),
+			"addPlainWPSite-Body wire shape must contain exactly %d keys, got %d",
+			len(expected), len(raw))
+		for _, key := range expected {
+			_, ok := raw[key]
+			assert.True(t, ok, "addPlainWPSite-Body must include %q", key)
+		}
+		expectedSet := map[string]struct{}{}
+		for _, k := range expected {
+			expectedSet[k] = struct{}{}
+		}
+		for key := range raw {
+			_, allowed := expectedSet[key]
+			assert.True(t, allowed, "addPlainWPSite-Body must NOT include %q (only company/display_name/region per spec)", key)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		encodeJSON(w, CreateWordPressSiteResponse{OperationID: "op-plain", Status: 202})
+	}))
+	defer server.Close()
+
+	c := &Client{
+		apiKey:     "test-api-key",
+		companyID:  "test-company",
+		baseURL:    server.URL,
+		httpClient: &http.Client{},
+	}
+
+	resp, err := c.CreatePlainWordPressSite(context.Background(), &CreatePlainWordPressSiteRequest{
+		Company:     "test-company",
+		DisplayName: "Plain Site",
+		Region:      "us-central1",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "op-plain", resp.OperationID)
+}
+
 func TestClient_GetWordPressSite(t *testing.T) {
 	siteID := "test-site-123"
 
@@ -673,75 +732,14 @@ func TestClient_CreateWordPressEnvironment_Error(t *testing.T) {
 	assert.Contains(t, err.Error(), "API error")
 }
 
-func TestClient_GetWordPressEnvironment(t *testing.T) {
-	siteID := "test-site-123"
-	envID := "test-env-456"
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, http.MethodGet, r.Method)
-		assert.Equal(t, fmt.Sprintf("/sites/environments/%s", envID), r.URL.Path)
-		assert.Equal(t, "Bearer test-api-key", r.Header.Get("Authorization"))
-
-		response := GetWordPressEnvironmentResponse{
-			Environment: WordPressEnvironment{
-				ID:          envID,
-				Name:        "staging",
-				DisplayName: "Staging",
-			},
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		encodeJSON(w, response)
-	}))
-	defer server.Close()
-
-	client := &Client{
-		apiKey:     "test-api-key",
-		companyID:  "test-company",
-		baseURL:    server.URL,
-		httpClient: &http.Client{},
-	}
-
-	ctx := context.Background()
-	resp, err := client.GetWordPressEnvironment(ctx, siteID, envID)
-
-	require.NoError(t, err)
-	assert.Equal(t, envID, resp.Environment.ID)
-	assert.Equal(t, "Staging", resp.Environment.DisplayName)
-}
-
-func TestClient_GetWordPressEnvironment_Error(t *testing.T) {
-	siteID := "test-site-123"
-	envID := "test-env-456"
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte(`{"error": "Environment not found"}`))
-	}))
-	defer server.Close()
-
-	client := &Client{
-		apiKey:     "test-api-key",
-		companyID:  "test-company",
-		baseURL:    server.URL,
-		httpClient: &http.Client{},
-	}
-
-	ctx := context.Background()
-	resp, err := client.GetWordPressEnvironment(ctx, siteID, envID)
-
-	require.Error(t, err)
-	assert.Nil(t, resp)
-	assert.True(t, IsNotFound(err), "expected NotFoundError for 404 response")
-}
-
 func TestClient_DeleteWordPressEnvironment(t *testing.T) {
+	siteID := "test-site-123"
 	envID := "test-env-456"
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodDelete, r.Method)
-		assert.Equal(t, fmt.Sprintf("/sites/environments/%s", envID), r.URL.Path)
+		// Spec path: /sites/{site_id}/environments/{env_id}
+		assert.Equal(t, fmt.Sprintf("/sites/%s/environments/%s", siteID, envID), r.URL.Path)
 		assert.Equal(t, "Bearer test-api-key", r.Header.Get("Authorization"))
 
 		response := DeleteWordPressEnvironmentResponse{
@@ -764,7 +762,7 @@ func TestClient_DeleteWordPressEnvironment(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	resp, err := client.DeleteWordPressEnvironment(ctx, envID)
+	resp, err := client.DeleteWordPressEnvironment(ctx, siteID, envID)
 
 	require.NoError(t, err)
 	assert.Equal(t, "delete-env-op-123", resp.OperationID)
@@ -772,6 +770,7 @@ func TestClient_DeleteWordPressEnvironment(t *testing.T) {
 }
 
 func TestClient_DeleteWordPressEnvironment_Error(t *testing.T) {
+	siteID := "test-site-123"
 	envID := "test-env-456"
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -788,7 +787,7 @@ func TestClient_DeleteWordPressEnvironment_Error(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	resp, err := client.DeleteWordPressEnvironment(ctx, envID)
+	resp, err := client.DeleteWordPressEnvironment(ctx, siteID, envID)
 
 	require.Error(t, err)
 	assert.Nil(t, resp)
@@ -1075,12 +1074,8 @@ func TestClient_NoCredentialLeakInErrors(t *testing.T) {
 			})
 			return err
 		}},
-		{"GetWordPressEnvironment", func() error {
-			_, err := c.GetWordPressEnvironment(context.Background(), "site-id", "env-id")
-			return err
-		}},
 		{"DeleteWordPressEnvironment", func() error {
-			_, err := c.DeleteWordPressEnvironment(context.Background(), "env-id")
+			_, err := c.DeleteWordPressEnvironment(context.Background(), "site-id", "env-id")
 			return err
 		}},
 		{"PollOperation", func() error {

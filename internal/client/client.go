@@ -82,6 +82,9 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, v 
 	return nil
 }
 
+// CreateWordPressSiteRequest is the body for `addWPSite-Body` in the
+// Kinsta v2 OpenAPI spec — provisions a full WordPress install with
+// admin user, site title, language, etc.
 type CreateWordPressSiteRequest struct {
 	Company              string `json:"company"`
 	DisplayName          string `json:"display_name"`
@@ -96,6 +99,18 @@ type CreateWordPressSiteRequest struct {
 	IsSubdomainMultisite bool   `json:"is_subdomain_multisite"`
 	WooCommerce          bool   `json:"woocommerce"`
 	WordPressSEO         bool   `json:"wordpressseo"`
+}
+
+// CreatePlainWordPressSiteRequest is the body for `addPlainWPSite-Body`
+// in the Kinsta v2 OpenAPI spec — provisions an empty WordPress
+// container (no install template, no admin user). Per the spec only
+// company/display_name/region are accepted on the wire; admin_*,
+// site_title, wp_language, install_mode, multisite/etc. fields are NOT
+// part of the addPlainWPSite shape.
+type CreatePlainWordPressSiteRequest struct {
+	Company     string `json:"company"`
+	DisplayName string `json:"display_name"`
+	Region      string `json:"region"`
 }
 
 type CreateWordPressSiteResponse struct {
@@ -156,10 +171,6 @@ type CreateWordPressEnvironmentResponse struct {
 	Status      int    `json:"status"`
 }
 
-type GetWordPressEnvironmentResponse struct {
-	Environment WordPressEnvironment `json:"environment"`
-}
-
 type DeleteWordPressEnvironmentResponse struct {
 	OperationID string `json:"operation_id"`
 	Message     string `json:"message"`
@@ -169,12 +180,12 @@ type DeleteWordPressEnvironmentResponse struct {
 type KinstaClient interface {
 	CompanyID() string
 	CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error)
+	CreatePlainWordPressSite(ctx context.Context, req *CreatePlainWordPressSiteRequest) (*CreateWordPressSiteResponse, error)
 	GetWordPressSite(ctx context.Context, id string) (*GetWordPressSiteResponse, error)
 	GetWordPressSites(ctx context.Context) (*GetWordPressSitesResponse, error)
 	DeleteWordPressSite(ctx context.Context, id string) (*DeleteWordPressSiteResponse, error)
 	CreateWordPressEnvironment(ctx context.Context, siteID string, req *CreateWordPressEnvironmentRequest) (*CreateWordPressEnvironmentResponse, error)
-	GetWordPressEnvironment(ctx context.Context, siteID, envID string) (*GetWordPressEnvironmentResponse, error)
-	DeleteWordPressEnvironment(ctx context.Context, envID string) (*DeleteWordPressEnvironmentResponse, error)
+	DeleteWordPressEnvironment(ctx context.Context, siteID, envID string) (*DeleteWordPressEnvironmentResponse, error)
 	PollOperation(ctx context.Context, operationID string) (string, error)
 }
 
@@ -183,6 +194,25 @@ func (c *Client) CompanyID() string {
 }
 
 func (c *Client) CreateWordPressSite(ctx context.Context, req *CreateWordPressSiteRequest) (*CreateWordPressSiteResponse, error) {
+	var createResponse CreateWordPressSiteResponse
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.do(ctx, http.MethodPost, "/sites", bytes.NewBuffer(body), &createResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &createResponse, nil
+}
+
+// CreatePlainWordPressSite posts the `addPlainWPSite-Body` shape to
+// POST /sites — the spec's documented path for empty-container sites.
+// Same response envelope as CreateWordPressSite.
+func (c *Client) CreatePlainWordPressSite(ctx context.Context, req *CreatePlainWordPressSiteRequest) (*CreateWordPressSiteResponse, error) {
 	var createResponse CreateWordPressSiteResponse
 
 	body, err := json.Marshal(req)
@@ -251,23 +281,15 @@ func (c *Client) CreateWordPressEnvironment(ctx context.Context, siteID string, 
 	return &createResponse, nil
 }
 
-func (c *Client) GetWordPressEnvironment(ctx context.Context, siteID, envID string) (*GetWordPressEnvironmentResponse, error) {
-	var getResponse GetWordPressEnvironmentResponse
-
-	// Use environment ID directly - Kinsta API doesn't require site_id for GET
-	path := fmt.Sprintf("/sites/environments/%s", envID)
-	err := c.do(ctx, http.MethodGet, path, nil, &getResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return &getResponse, nil
-}
-
-func (c *Client) DeleteWordPressEnvironment(ctx context.Context, envID string) (*DeleteWordPressEnvironmentResponse, error) {
+// DeleteWordPressEnvironment matches the spec path
+// `DELETE /sites/{site_id}/environments/{env_id}` (per
+// deleteWpEnvironment-Params). The pre-spec-audit version called
+// `/sites/environments/{env_id}` — an undocumented route that may
+// silently fail against the real API.
+func (c *Client) DeleteWordPressEnvironment(ctx context.Context, siteID, envID string) (*DeleteWordPressEnvironmentResponse, error) {
 	var deleteResponse DeleteWordPressEnvironmentResponse
 
-	path := fmt.Sprintf("/sites/environments/%s", envID)
+	path := fmt.Sprintf("/sites/%s/environments/%s", siteID, envID)
 	err := c.do(ctx, http.MethodDelete, path, nil, &deleteResponse)
 	if err != nil {
 		return nil, err

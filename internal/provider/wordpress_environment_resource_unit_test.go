@@ -17,8 +17,7 @@ type mockWordPressEnvironmentKinstaClient struct {
 	client.KinstaClient
 	companyID                  string
 	createWordPressEnvironment func(ctx context.Context, siteID string, req *client.CreateWordPressEnvironmentRequest) (*client.CreateWordPressEnvironmentResponse, error)
-	getWordPressEnvironment    func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error)
-	deleteWordPressEnvironment func(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error)
+	deleteWordPressEnvironment func(ctx context.Context, siteID, envID string) (*client.DeleteWordPressEnvironmentResponse, error)
 	getWordPressSite           func(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error)
 	pollOperation              func(ctx context.Context, operationID string) (string, error)
 }
@@ -31,12 +30,8 @@ func (m *mockWordPressEnvironmentKinstaClient) CreateWordPressEnvironment(ctx co
 	return m.createWordPressEnvironment(ctx, siteID, req)
 }
 
-func (m *mockWordPressEnvironmentKinstaClient) GetWordPressEnvironment(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
-	return m.getWordPressEnvironment(ctx, siteID, envID)
-}
-
-func (m *mockWordPressEnvironmentKinstaClient) DeleteWordPressEnvironment(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
-	return m.deleteWordPressEnvironment(ctx, envID)
+func (m *mockWordPressEnvironmentKinstaClient) DeleteWordPressEnvironment(ctx context.Context, siteID, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+	return m.deleteWordPressEnvironment(ctx, siteID, envID)
 }
 
 func (m *mockWordPressEnvironmentKinstaClient) GetWordPressSite(ctx context.Context, siteID string) (*client.GetWordPressSiteResponse, error) {
@@ -93,17 +88,6 @@ func Test_resourceWordPressEnvironmentCreate_Standard(t *testing.T) {
 		pollOperation: func(ctx context.Context, operationID string) (string, error) {
 			assert.Equal(t, "test-env-operation-id", operationID)
 			return "test-env-id", nil
-		},
-		getWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
-			assert.Equal(t, "test-site-id", siteID)
-			assert.Equal(t, "test-env-id", envID)
-			return &client.GetWordPressEnvironmentResponse{
-				Environment: client.WordPressEnvironment{
-					ID:          "test-env-id",
-					Name:        "staging",
-					DisplayName: "staging",
-				},
-			}, nil
 		},
 	}
 
@@ -168,15 +152,6 @@ func Test_resourceWordPressEnvironmentCreate_Premium(t *testing.T) {
 		pollOperation: func(ctx context.Context, operationID string) (string, error) {
 			assert.Equal(t, "test-env-premium-operation-id", operationID)
 			return "test-premium-env-id", nil
-		},
-		getWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
-			return &client.GetWordPressEnvironmentResponse{
-				Environment: client.WordPressEnvironment{
-					ID:          "test-premium-env-id",
-					Name:        "premium-staging",
-					DisplayName: "Premium Staging",
-				},
-			}, nil
 		},
 	}
 
@@ -329,7 +304,8 @@ func Test_resourceWordPressEnvironmentRead_Error(t *testing.T) {
 
 func Test_resourceWordPressEnvironmentDelete(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
-		deleteWordPressEnvironment: func(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+		deleteWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+			assert.Equal(t, "test-site-id", siteID)
 			assert.Equal(t, "test-env-id", envID)
 			return &client.DeleteWordPressEnvironmentResponse{
 				OperationID: "delete-env-op-123",
@@ -355,7 +331,9 @@ func Test_resourceWordPressEnvironmentDelete(t *testing.T) {
 
 func Test_resourceWordPressEnvironmentDelete_Error(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
-		deleteWordPressEnvironment: func(ctx context.Context, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+		deleteWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+			assert.Equal(t, "test-site-id", siteID, "Delete must pass site_id from state to the client (spec path: /sites/{site_id}/environments/{env_id})")
+			assert.Equal(t, "test-env-id", envID)
 			return nil, errors.New("failed to delete WordPress environment")
 		},
 	}
@@ -526,14 +504,6 @@ func Test_resourceWordPressEnvironmentCreate_RequestValidation(t *testing.T) {
 			pollOperation: func(ctx context.Context, operationID string) (string, error) {
 				return "test-env-id", nil
 			},
-			getWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
-				return &client.GetWordPressEnvironmentResponse{
-					Environment: client.WordPressEnvironment{
-						ID:          "test-env-id",
-						DisplayName: "Premium Staging",
-					},
-				}, nil
-			},
 		}
 
 		d := schema.TestResourceDataRaw(t, resourceWordPressEnvironment().Schema, map[string]interface{}{
@@ -599,14 +569,6 @@ func Test_resourceWordPressEnvironmentCreate_RequestValidation(t *testing.T) {
 			},
 			pollOperation: func(ctx context.Context, operationID string) (string, error) {
 				return "test-env-id", nil
-			},
-			getWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.GetWordPressEnvironmentResponse, error) {
-				return &client.GetWordPressEnvironmentResponse{
-					Environment: client.WordPressEnvironment{
-						ID:          "test-env-id",
-						DisplayName: "Staging",
-					},
-				}, nil
 			},
 		}
 
