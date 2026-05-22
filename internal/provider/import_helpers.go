@@ -22,17 +22,19 @@ import (
 //
 //   The fix is the standard hashicorp/aws pattern: during Read, pull
 //   the config-declared values out of d.GetRawConfig() and write them
-//   into state for any field where state is still empty/default. On the
+//   into state for any field whose value the user has declared. On the
 //   first post-import plan the DiffSuppressFunc (`return old != ""` on
 //   strings) sees the seeded value, suppresses the diff, and the plan
 //   reports the resource as in-sync.
 //
-//   stringFields: state == "" is the "seed me" signal — preserves any
-//     value the API actually returned, only fills empties.
-//   boolFields: always copy config when present. Bool defaults are all
-//     `false`, so overwriting `false` with another `false` is a no-op,
-//     and overwriting `false` with a config-declared `true` is the
-//     exact post-import correction we want.
+//   Policy: config is the source of truth for the fields passed in here.
+//   If the user has declared a value in HCL, it lands in state. We do
+//   NOT try to be clever about "skip if state already has a value" —
+//   that guard broke on fields with non-empty schema Defaults like
+//   install_mode ("new") and wp_language ("en_US"), because d.Get()
+//   returns the Default even when state is actually empty post-import.
+//   Always overwriting with config is a no-op when state and config
+//   already agree, and is the correct correction when they don't.
 //
 //   During import-time Read (Importer.StateContext flow) there is no
 //   config yet — d.GetRawConfig() returns a null cty.Value. The
@@ -46,13 +48,6 @@ func seedWriteOnlyFromConfig(d *schema.ResourceData, stringFields, boolFields []
 	}
 
 	for _, name := range stringFields {
-		if d.Get(name).(string) != "" {
-			// State already has a value (from a previous create/apply or from
-			// the API on this Read). Don't overwrite — preserves the user's
-			// ability to clear a field intentionally (which would still
-			// trigger ForceNew, the expected behavior).
-			continue
-		}
 		v := raw.GetAttr(name)
 		if v.IsNull() || !v.IsKnown() {
 			continue
