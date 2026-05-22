@@ -305,6 +305,7 @@ func Test_resourceWordPressEnvironmentRead_Error(t *testing.T) {
 func Test_resourceWordPressEnvironmentDelete(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
 		deleteWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+			assert.Equal(t, "test-site-id", siteID)
 			assert.Equal(t, "test-env-id", envID)
 			return &client.DeleteWordPressEnvironmentResponse{
 				OperationID: "delete-env-op-123",
@@ -331,6 +332,8 @@ func Test_resourceWordPressEnvironmentDelete(t *testing.T) {
 func Test_resourceWordPressEnvironmentDelete_Error(t *testing.T) {
 	mockClient := &mockWordPressEnvironmentKinstaClient{
 		deleteWordPressEnvironment: func(ctx context.Context, siteID, envID string) (*client.DeleteWordPressEnvironmentResponse, error) {
+			assert.Equal(t, "test-site-id", siteID, "Delete must pass site_id from state to the client (spec path: /sites/{site_id}/environments/{env_id})")
+			assert.Equal(t, "test-env-id", envID)
 			return nil, errors.New("failed to delete WordPress environment")
 		},
 	}
