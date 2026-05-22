@@ -478,20 +478,25 @@ func TestClient_CreatePlainWordPressSite_BodyShape(t *testing.T) {
 		var raw map[string]json.RawMessage
 		require.NoError(t, json.NewDecoder(r.Body).Decode(&raw))
 
-		// Required keys per addPlainWPSite-Body.
-		for _, key := range []string{"company", "display_name", "region"} {
+		// Strict shape check: exactly three keys, no more, no less. A
+		// permissive blacklist would still pass if an unrelated extra
+		// field were silently added to CreatePlainWordPressSiteRequest —
+		// asserting the full key set catches that regression too.
+		expected := []string{"company", "display_name", "region"}
+		assert.Equal(t, len(expected), len(raw),
+			"addPlainWPSite-Body wire shape must contain exactly %d keys, got %d",
+			len(expected), len(raw))
+		for _, key := range expected {
 			_, ok := raw[key]
 			assert.True(t, ok, "addPlainWPSite-Body must include %q", key)
 		}
-		// Keys that belong to addWPSite-Body but NOT addPlainWPSite-Body.
-		// Sending these is a spec violation even if the server tolerates it.
-		for _, key := range []string{
-			"install_mode", "admin_email", "admin_password", "admin_user",
-			"site_title", "wp_language",
-			"is_multisite", "is_subdomain_multisite", "woocommerce", "wordpressseo",
-		} {
-			_, present := raw[key]
-			assert.False(t, present, "addPlainWPSite-Body must NOT include %q", key)
+		expectedSet := map[string]struct{}{}
+		for _, k := range expected {
+			expectedSet[k] = struct{}{}
+		}
+		for key := range raw {
+			_, allowed := expectedSet[key]
+			assert.True(t, allowed, "addPlainWPSite-Body must NOT include %q (only company/display_name/region per spec)", key)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

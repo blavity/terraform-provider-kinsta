@@ -100,9 +100,11 @@ func resourceWordPressSite() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"new", "plain", "migrate"}, false),
 				Description: "WordPress installation mode. " +
 					"`new` (default) provisions the full WordPress install template — default theme, sample content, and the admin user from `admin_user`/`admin_email`/`admin_password`. " +
-					"`plain` creates an empty WordPress container with no install template (matches the \"Empty site\" option in the MyKinsta UI), suitable for sites whose contents are pushed by a downstream pipeline (e.g., Bedrock). " +
+					"`plain` creates an empty WordPress container per the spec's `addPlainWPSite-Body` shape (matches the \"Empty site\" option in the MyKinsta UI), suitable for sites whose contents are pushed by a downstream pipeline (e.g., Bedrock). " +
 					"`migrate` provisions an empty container in preparation for a migration request submitted via the MyKinsta UI; the migration flow itself is out of scope for this provider. " +
-					"Write-only credentials are still sent in all modes and apply once content lands.",
+					"**Important — `plain` mode body shape:** `addPlainWPSite-Body` only carries `company`, `display_name`, and `region`. " +
+					"`admin_email`, `admin_password`, `admin_user`, `site_title`, `wp_language`, and the multisite/WooCommerce/Yoast flags are **not sent to the API** when `install_mode = \"plain\"` — they are preserved in state for documentation but have no effect on create. " +
+					"For `new` and `migrate`, all those fields flow through to the API as documented.",
 			},
 			"wp_language": {
 				Type:        schema.TypeString,
