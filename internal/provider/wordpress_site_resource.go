@@ -263,6 +263,17 @@ func resourceWordPressSiteRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
+	// Seed write-only fields from the user's HCL config. Kinsta's GET
+	// doesn't return any of them, so without this step a post-import
+	// plan would propose destroy+recreate for every field declared.
+	// See import_helpers.go for the full rationale.
+	if err := seedWriteOnlyFromConfig(d,
+		[]string{"region", "install_mode", "admin_email", "admin_password", "admin_user", "site_title", "wp_language"},
+		[]string{"is_multisite", "is_subdomain_multisite", "woocommerce", "wordpressseo"},
+	); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 

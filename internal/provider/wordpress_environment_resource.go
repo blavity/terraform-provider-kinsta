@@ -258,6 +258,16 @@ func resourceWordPressEnvironmentRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
+	// Seed write-only fields from the user's HCL config (post-import
+	// only — null config during import-time Read is handled inside the
+	// helper). See import_helpers.go for the full rationale.
+	if err := seedWriteOnlyFromConfig(d,
+		[]string{"admin_email", "admin_password", "admin_user", "site_title", "wp_language"},
+		[]string{"is_premium"},
+	); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
