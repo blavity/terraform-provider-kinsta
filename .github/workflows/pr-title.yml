@@ -1,14 +1,19 @@
 # PR Title Linter
 #
-# Enforces conventional-commit format on PR titles. Squash-merge is the only
-# strategy used here, so the PR title becomes the single commit subject on
-# main — and GoReleaser parses those subjects to group release notes. A
-# non-conventional title silently lands in "Miscellaneous" and hides the
-# change from users.
+# Enforces conventional-commit format on PR titles via the shared
+# pr-title-lint reusable. Squash-merge is the only strategy used here, so
+# the PR title becomes the single commit subject on main — and GoReleaser
+# parses those subjects to group release notes. A non-conventional title
+# silently lands in "Miscellaneous" and hides the change from users.
 #
-# All PR-title content is consumed by the action via the github event
-# payload; nothing is interpolated into shell `run:` steps here, so the
-# title is treated as data the action parses, not as code.
+# pull_request_target is required here (not pull_request): this repo accepts
+# cross-org fork PRs, and the lint needs GITHUB_TOKEN — which pull_request
+# withholds from fork PRs. Verified safe: no checkout step, no secrets beyond
+# GITHUB_TOKEN (pull-requests: read only), PR title consumed as event-payload
+# data by the action rather than executed as code. See shared-workflows#1401.
+#
+# The reusable has no built-in `pull_request`/`pull_request_target` trigger —
+# this caller's `on:` block is authoritative.
 
 name: PR Title
 
@@ -21,26 +26,13 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          types: |
-            feat
-            fix
-            chore
-            docs
-            test
-            refactor
-            ci
-            build
-            perf
-            style
-            revert
-          requireScope: false
-          subjectPattern: ^[A-Za-z].+$
-          subjectPatternError: |
-            The subject of the PR title must start with a letter
-            (no leading symbols, no empty subject).
+    uses: blavity/shared-workflows/.github/workflows/pr-title-lint.yaml@ac2bb2d18bd17d2cd866104357d86cb82cb178f9 # pr-title-lint-v1
+    with:
+      # require_scope: false and the default types set (build, chore, ci,
+      # docs, feat, fix, perf, refactor, revert, style, test) already match
+      # this repo's prior local config — no types: override needed.
+      require_scope: false
+      subject_pattern: ^[A-Za-z].+$
+      subject_pattern_error: |
+        The subject of the PR title must start with a letter
+        (no leading symbols, no empty subject).
