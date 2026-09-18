@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terraform-provider-kinsta
+  description: "Custom Terraform and OpenTofu provider for Kinsta hosting management."
+  annotations:
+    github.com/project-slug: blavity/terraform-provider-kinsta
+  tags:
+    - opentofu
+    - terraform-provider
+    - kinsta
+    - go
+spec:
+  type: library
+  owner: engineering
+  lifecycle: production
