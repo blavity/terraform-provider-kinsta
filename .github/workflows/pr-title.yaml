@@ -1,0 +1,18 @@
+# Thin caller so the status-check context is `lint / Lint PR title` (this job's
+# id + the called job's name). A single inlined job would emit just
+# `Lint PR title` — a different context, and a required context that never
+# appears blocks every pull request.
+
+name: PR Title Lint
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  lint:
+    permissions:
+      pull-requests: read
+    uses: ./.github/workflows/pr-title-lint-local.yaml
